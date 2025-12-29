@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CONTRACT_ADDRESS=${NEXT_PUBLIC_CONTRACT_ADDRESS}
+      - NEXT_PUBLIC_AUTHORIZED_AGENT=${NEXT_PUBLIC_AUTHORIZED_AGENT}
+      - NEXT_PUBLIC_IPFS_GATEWAY=${NEXT_PUBLIC_IPFS_GATEWAY}
+      - NEXT_PUBLIC_PINATA_API_KEY=${NEXT_PUBLIC_PINATA_API_KEY}
+      - NEXT_PUBLIC_PINATA_SECRET_KEY=${NEXT_PUBLIC_PINATA_SECRET_KEY}
+      - NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+    depends_on:
+      - webhook-server
+    networks:
+      - vera-network
+
+  # Webhook Server (Production replacement for Kiro hooks)
+  webhook-server:
+    build:
+      context: ./backend-agents/webhook-server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=http://frontend:3000
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - ARBITER_PRIVATE_KEY=${ARBITER_PRIVATE_KEY}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - SEPOLIA_RPC_URL=${SEPOLIA_RPC_URL}
+      - IPFS_GATEWAY=${IPFS_GATEWAY}
+      - PINATA_API_KEY=${PINATA_API_KEY}
+      - PINATA_SECRET_KEY=${PINATA_SECRET_KEY}
+    volumes:
+      - ./backend-agents/webhook-server:/app
+      - /app/node_modules
+    networks:
+      - vera-network
+
+  # Redis (for caching and session management)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - vera-network
+
+  # PostgreSQL (optional - for production data persistence)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=vera_protocol
+      - POSTGRES_USER=vera_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - vera-network
+
+  # Nginx (reverse proxy and load balancer)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - webhook-server
+    networks:
+      - vera-network
+
+volumes:
+  redis-data:
+  postgres-data:
+
+networks:
+  vera-network:
+    driver: bridge
