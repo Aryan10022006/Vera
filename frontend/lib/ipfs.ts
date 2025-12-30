@@ -265,3 +265,81 @@ function extractDeadline(transcript: string): number | null {
   
   return null;
 }
+
+/**
+ * Generate agreement from structured form input
+ */
+export function generateAgreementFromForm(formData: {
+  projectType: string;
+  title: string;
+  description: string;
+  budget: string;
+  deadline: string;
+  technicalRequirements: string[];
+  subjectiveRequirements: string[];
+  milestones: Array<{
+    id: string;
+    name: string;
+    description: string;
+    percentage: number;
+    deadline: string;
+  }>;
+  clientAddress: string;
+  freelancerAddress: string;
+}): Agreement {
+  const projectId = `project_${Date.now()}`;
+  const budgetWei = (parseFloat(formData.budget) * 1e18).toString();
+
+  // Convert technical requirements
+  const technicalRequirements: TechnicalRequirement[] = formData.technicalRequirements.map((req, index) => ({
+    id: `tech_${index + 1}`,
+    description: req,
+    acceptanceCriteria: [
+      'Code quality meets standards',
+      'All tests pass successfully',
+      'No security vulnerabilities'
+    ],
+    weight: 0.8 / formData.technicalRequirements.length,
+    type: 'technical'
+  }));
+
+  // Convert subjective requirements
+  const subjectiveRequirements: SubjectiveRequirement[] = formData.subjectiveRequirements.map((req, index) => ({
+    id: `subj_${index + 1}`,
+    description: req,
+    weight: 0.2 / formData.subjectiveRequirements.length,
+    type: 'subjective'
+  }));
+
+  // Convert milestones
+  const milestones: MilestonePayment[] = formData.milestones.map(m => {
+    const milestoneAmount = (BigInt(budgetWei) * BigInt(m.percentage)) / BigInt(100);
+    return {
+      id: m.id,
+      amount: milestoneAmount.toString(),
+      type: m.percentage >= 50 ? 'technical' : 'technical' // All treated as technical for now
+    };
+  });
+
+  return {
+    projectId,
+    title: formData.title,
+    description: formData.description,
+    requirements: {
+      technical: technicalRequirements,
+      subjective: subjectiveRequirements
+    },
+    payment: {
+      total: budgetWei,
+      milestones
+    },
+    parties: {
+      client: formData.clientAddress,
+      freelancer: formData.freelancerAddress
+    },
+    timeline: {
+      created: Date.now(),
+      deadline: new Date(formData.deadline).getTime()
+    }
+  };
+}

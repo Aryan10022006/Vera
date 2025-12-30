@@ -2,20 +2,23 @@
 
 ## Introduction
 
-Vera Protocol is a Pure Web3 AI-mediated freelance escrow platform that uses AI agents as autonomous oracles to solve the trust gap between freelancers and clients. The system eliminates 'Subjectivity Loopholes' through an 80/20 payment split (80% objective/technical, 20% subjective variance) and implements a 'Silent Consent' protocol where funds auto-release after 72 hours of client inactivity.
+Vera Protocol is a Pure Web3 AI-mediated freelance escrow platform that uses AI agents (powered by production LLM APIs like OpenAI/Anthropic) as autonomous oracles to solve the trust gap between freelancers and clients. The system eliminates 'Subjectivity Loopholes' through an 80/20 payment split (80% objective/technical, 20% subjective variance) and implements a 'Silent Consent' protocol where funds auto-release after 72 hours of client inactivity.
+
+**Note**: Kiro IDE is used for development workflow management and documentation only. Production AI verification uses dedicated LLM API services (OpenAI GPT-4, Anthropic Claude, etc.) for actual code analysis and arbitration.
 
 ## Glossary
 
 - **Vera_Protocol**: The complete AI-mediated freelance escrow system
-- **AI_Sentinel**: The neutral AI arbitrator that evaluates milestone completion
+- **AI_Sentinel**: The neutral AI arbitrator (OpenAI GPT-4/Anthropic Claude) that evaluates milestone completion
 - **Voice_Handshake**: Voice-to-text interface for creating project agreements
 - **IPFS_Agreement**: Decentralized storage of project requirements and metadata
-- **GitHub_Audit**: Automated code quality and completion verification via MCP
+- **GitHub_Audit**: Automated code quality and completion verification via GitHub API + LLM analysis
 - **EIP_712_Signature**: Cryptographic signature standard for secure payouts
 - **Silent_Consent**: Auto-release mechanism after 72 hours of client inactivity
 - **Objective_Milestone**: Technical deliverable worth 80% of payment
 - **Subjective_Variance**: Style/preference buffer worth 20% of payment
-- **MCP_Server**: Model Context Protocol server for GitHub integration
+- **LLM_Verifier**: Production AI service using OpenAI/Anthropic for code evaluation
+- **Kiro_IDE**: Development tool only - NOT used in production runtime
 
 ## Requirements
 
@@ -43,17 +46,18 @@ Vera Protocol is a Pure Web3 AI-mediated freelance escrow platform that uses AI 
 4. IF client disputes within 72 hours, THEN THE Vera_Protocol SHALL pause auto-release and initiate arbitration
 5. WHEN 72 hours pass without dispute, THE Vera_Protocol SHALL execute silent consent release
 
-### Requirement 3: GitHub MCP-Driven Code Audit
+### Requirement 3: LLM-Powered Code Audit
 
-**User Story:** As an AI sentinel, I want to automatically verify code deliverables, so that I can objectively assess milestone completion.
+**User Story:** As an AI sentinel, I want to automatically verify code deliverables using production LLM APIs, so that I can objectively assess milestone completion.
 
 #### Acceptance Criteria
 
-1. WHEN a freelancer submits a GitHub repository, THE GitHub_Audit SHALL analyze code quality using MCP servers
-2. WHEN code analysis completes, THE AI_Sentinel SHALL verify requirements against deliverables
-3. WHEN technical requirements are met, THE Vera_Protocol SHALL mark objective milestones as complete
-4. IF code fails quality checks, THEN THE AI_Sentinel SHALL provide specific feedback for remediation
-5. THE GitHub_Audit SHALL validate functionality, security, and documentation standards
+1. WHEN a freelancer submits a GitHub repository, THE GitHub_Audit SHALL analyze code quality using LLM APIs (OpenAI GPT-4 or Anthropic Claude)
+2. WHEN code analysis completes, THE AI_Sentinel SHALL verify requirements against deliverables using structured LLM prompts
+3. WHEN technical requirements are met (80%+ score), THE Vera_Protocol SHALL mark objective milestones as complete
+4. IF code fails quality checks, THEN THE AI_Sentinel SHALL provide specific, actionable feedback for remediation
+5. THE GitHub_Audit SHALL validate functionality, security, and documentation standards using multi-stage LLM evaluation
+6. THE AI_Sentinel SHALL use GitHub API for code retrieval and LLM for intelligent analysis (NOT Kiro/MCP in production)
 
 ### Requirement 4: EIP-712 Cryptographic Payout Process
 

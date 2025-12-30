@@ -91,7 +91,8 @@ export class GitHubAgent {
         documentation,
       };
     } catch (error) {
-      throw new Error(`Repository analysis failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Repository analysis failed: ${errorMessage}`);
     }
   }
 
@@ -104,9 +105,16 @@ export class GitHubAgent {
     repositories: string[];
   }> {
     try {
+      const clientId = process.env.GITHUB_CLIENT_ID;
+      const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+      
+      if (!clientId || !clientSecret) {
+        throw new Error('GitHub OAuth credentials not configured');
+      }
+
       const auth = createOAuthAppAuth({
-        clientId: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        clientId,
+        clientSecret,
       });
 
       const { token } = await auth({
@@ -125,10 +133,11 @@ export class GitHubAgent {
       return {
         token,
         username: user.login,
-        repositories: repos.map(repo => repo.full_name),
+        repositories: repos.map((repo) => repo.full_name),
       };
     } catch (error) {
-      throw new Error(`GitHub authentication failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`GitHub authentication failed: ${errorMessage}`);
     }
   }
 
@@ -140,16 +149,22 @@ export class GitHubAgent {
     return [match[1], match[2].replace('.git', '')];
   }
 
-  private async analyzeCodeQuality(owner: string, repo: string) {
+  private async analyzeCodeQuality(owner: string, repo: string): Promise<{
+    linesOfCode: number;
+    files: number;
+    languages: Record<string, number>;
+    complexity: number;
+  }> {
     const { data: languages } = await this.octokit.rest.repos.listLanguages({ owner, repo });
     
-    const totalLines = Object.values(languages).reduce((a: number, b: number) => a + b, 0);
+    const languagesRecord = languages as Record<string, number>;
+    const totalLines = Object.values(languagesRecord).reduce((a: number, b: number) => a + b, 0);
     
     return {
       linesOfCode: totalLines,
-      files: Object.keys(languages).length,
-      languages: languages as Record<string, number>,
-      complexity: this.calculateComplexity(languages as Record<string, number>),
+      files: Object.keys(languagesRecord).length,
+      languages: languagesRecord,
+      complexity: this.calculateComplexity(languagesRecord),
     };
   }
 
@@ -182,7 +197,7 @@ export class GitHubAgent {
 
       return {
         hasTests: contents.total_count > 0,
-        testFiles: contents.items.map((item: any) => item.name),
+        testFiles: contents.items.map((item) => item.name),
         coverage: 0,
       };
     } catch (error) {
