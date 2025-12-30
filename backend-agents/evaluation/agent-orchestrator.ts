@@ -379,7 +379,7 @@ export class AgentOrchestrator {
   private calculateOverallScore(evaluations: Map<WorkType, EvaluationResult>): number {
     if (evaluations.size === 0) return 0;
     
-    const scores = Array.from(evaluations.values()).map(eval => eval.overallScore);
+    const scores = Array.from(evaluations.values()).map(evaluation => evaluation.overallScore);
     return scores.reduce((sum, score) => sum + score, 0) / scores.length;
   }
 

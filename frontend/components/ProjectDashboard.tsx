@@ -5,7 +5,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { VERA_CONTRACT_ADDRESS, VERA_CONTRACT_ABI } from '@/lib/wagmi';
 import { getAgreementFromIPFS, Agreement } from '@/lib/ipfs';
 import { Clock, CheckCircle, AlertCircle, ExternalLink, Github } from 'lucide-react';
-import { formatEther, keccak256, toUtf8Bytes } from 'viem';
+import { formatEther, keccak256, stringToHex } from 'viem';
 
 interface Project {
   id: string;
@@ -88,8 +88,8 @@ export function ProjectDashboard() {
   const createProject = async (agreement: Agreement, ipfsHash: string) => {
     if (!address) return;
 
-    const projectIdHash = keccak256(toUtf8Bytes(agreement.projectId));
-    const ipfsHashBytes = keccak256(toUtf8Bytes(ipfsHash));
+    const projectIdHash = keccak256(stringToHex(agreement.projectId));
+    const ipfsHashBytes = keccak256(stringToHex(ipfsHash));
 
     writeContract({
       address: VERA_CONTRACT_ADDRESS,
@@ -101,7 +101,7 @@ export function ProjectDashboard() {
   };
 
   const submitMilestone = (milestoneId: string) => {
-    const milestoneIdHash = keccak256(toUtf8Bytes(milestoneId));
+    const milestoneIdHash = keccak256(stringToHex(milestoneId));
     
     writeContract({
       address: VERA_CONTRACT_ADDRESS,
@@ -112,7 +112,7 @@ export function ProjectDashboard() {
   };
 
   const releaseSilentConsent = (milestoneId: string) => {
-    const milestoneIdHash = keccak256(toUtf8Bytes(milestoneId));
+    const milestoneIdHash = keccak256(stringToHex(milestoneId));
     
     writeContract({
       address: VERA_CONTRACT_ADDRESS,

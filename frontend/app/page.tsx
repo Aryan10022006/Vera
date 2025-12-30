@@ -1,6 +1,7 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { ProjectDashboard } from '@/components/ProjectDashboard';
+import GitHubConnect from '@/components/GitHubConnect';
 import { Mic, Shield, Zap, Globe, ArrowRight, CheckCircle, Clock, Users } from 'lucide-react';
 
 export default function HomePage() {
@@ -186,6 +187,13 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* GitHub Connection Card */}
+        <div className="mb-8 animate-fade-in">
+          <GitHubConnect />
+        </div>
+
+        {/* Project Dashboard */}
         <ProjectDashboard />
       </section>
 

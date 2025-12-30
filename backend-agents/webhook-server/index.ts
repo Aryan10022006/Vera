@@ -15,6 +15,7 @@ import { ArbitrationAgent } from '../arbitration/arbitration-agent.js';
 import { IPFSAgent } from '../ipfs-integration/ipfs-agent.js';
 import { VoiceProcessingAgent } from '../voice-processing/voice-agent.js';
 import { AgentOrchestrator, ProjectRequirements, WorkType } from '../evaluation/agent-orchestrator.js';
+import { GitHubOAuthHandler } from '../github-oauth/oauth-handler.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -184,6 +185,13 @@ const ipfsAgent = new IPFSAgent();
 const voiceAgent = new VoiceProcessingAgent();
 const agentOrchestrator = new AgentOrchestrator(process.env.GITHUB_TOKEN || '');
 
+// Initialize GitHub OAuth handler
+const githubOAuth = new GitHubOAuthHandler({
+  clientId: process.env.GITHUB_OAUTH_CLIENT_ID || '',
+  clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || '',
+  redirectUri: process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/github/callback',
+});
+
 // Initialize milestone verifier
 const verifier = new MilestoneVerifier(
   process.env.ARBITER_PRIVATE_KEY!,
@@ -208,6 +216,151 @@ app.get('/health', (req, res) => {
     version: '1.0.0'
   });
 });
+
+// ===== GitHub OAuth Endpoints =====
+
+// Get GitHub authorization URL
+app.get('/api/github/auth-url', (req, res) => {
+  try {
+    const walletAddress = req.query.address as string;
+    
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address required' });
+    }
+
+    const authUrl = githubOAuth.getAuthorizationUrl(walletAddress);
+    
+    res.json({ 
+      authUrl,
+      success: true 
+    });
+  } catch (error: any) {
+    console.error('Error generating GitHub auth URL:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GitHub OAuth callback handler
+app.get('/api/github/callback', async (req, res) => {
+  try {
+    const { code, state } = req.query;
+    
+    if (!code || !state) {
+      return res.status(400).json({ error: 'Missing code or state parameter' });
+    }
+
+    // Decode state to get wallet address
+    const decoded = Buffer.from(state as string, 'base64').toString('utf-8');
+    const [walletAddress] = decoded.split(':');
+
+    // Exchange code for token
+    const userToken = await githubOAuth.exchangeCodeForToken(code as string, walletAddress);
+    
+    // Get user profile
+    const profile = await githubOAuth.getUserProfile(walletAddress);
+
+    res.json({
+      success: true,
+      message: 'GitHub connected successfully',
+      profile,
+      connectedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('GitHub OAuth callback error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Check GitHub connection status
+app.get('/api/github/status', async (req, res) => {
+  try {
+    const walletAddress = req.query.address as string;
+    
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address required' });
+    }
+
+    const isConnected = githubOAuth.isUserConnected(walletAddress);
+    
+    if (!isConnected) {
+      return res.json({ 
+        connected: false,
+        message: 'GitHub not connected'
+      });
+    }
+
+    // Verify token is still valid
+    const isValid = await githubOAuth.verifyUserToken(walletAddress);
+    
+    if (!isValid) {
+      return res.json({
+        connected: false,
+        message: 'GitHub token expired or invalid'
+      });
+    }
+
+    // Get profile
+    const profile = await githubOAuth.getUserProfile(walletAddress);
+
+    res.json({
+      connected: true,
+      profile,
+      scope: githubOAuth.getUserToken(walletAddress)?.scope
+    });
+  } catch (error: any) {
+    console.error('Error checking GitHub status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Disconnect GitHub
+app.post('/api/github/disconnect', (req, res) => {
+  try {
+    const { address } = req.body;
+    
+    if (!address) {
+      return res.status(400).json({ error: 'Wallet address required' });
+    }
+
+    githubOAuth.disconnectUser(address);
+    
+    res.json({
+      success: true,
+      message: 'GitHub disconnected successfully'
+    });
+  } catch (error: any) {
+    console.error('Error disconnecting GitHub:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List user's repositories
+app.get('/api/github/repositories', async (req, res) => {
+  try {
+    const walletAddress = req.query.address as string;
+    
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address required' });
+    }
+
+    if (!githubOAuth.isUserConnected(walletAddress)) {
+      return res.status(401).json({ error: 'GitHub not connected' });
+    }
+
+    const repos = await githubOAuth.getUserRepositories(walletAddress);
+    
+    res.json({
+      success: true,
+      repositories: repos,
+      count: repos.length
+    });
+  } catch (error: any) {
+    console.error('Error fetching repositories:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== End GitHub OAuth Endpoints =====
 
 // GitHub webhook endpoint - Milestone Verification
 app.post('/webhooks/github/milestone-verification', async (req, res) => {

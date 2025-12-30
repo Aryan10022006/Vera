@@ -1,14 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.fallback = {
       fs: false,
       net: false,
       tls: false,
     };
+    
+    // Ignore optional dependencies that aren't needed for web
+    config.externals = config.externals || [];
+    if (!isServer) {
+      config.externals.push({
+        '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
+        'pino-pretty': 'pino-pretty',
+      });
+    }
+    
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
+    };
+    
     return config;
   },
   env: {
