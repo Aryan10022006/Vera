@@ -189,7 +189,7 @@ const agentOrchestrator = new AgentOrchestrator(process.env.GITHUB_TOKEN || '');
 const githubOAuth = new GitHubOAuthHandler({
   clientId: process.env.GITHUB_OAUTH_CLIENT_ID || '',
   clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || '',
-  redirectUri: process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/github/callback',
+  redirectUri: process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:3000/github/callback',
 });
 
 // Initialize milestone verifier

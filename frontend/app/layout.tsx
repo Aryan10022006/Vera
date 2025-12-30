@@ -31,7 +31,11 @@ export const metadata: Metadata = {
     title: 'Vera Protocol',
     description: 'AI-Mediated Pure Web3 Escrow Platform',
   },
-  viewport: 'width=device-width, initial-scale=1',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: '#6366f1',
 };
 
@@ -44,44 +48,44 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased">
         <Providers>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="min-h-screen">
             {/* Navigation */}
-            <nav className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl">
+            <nav className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl shadow-sm">
               <div className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="relative group">
+                      <div className="w-10 h-10 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
                         <span className="text-white font-bold text-lg">V</span>
                       </div>
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-vera-accent rounded-full animate-pulse"></div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-vera-accent rounded-full animate-pulse shadow-lg"></div>
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold bg-gradient-to-r from-vera-primary to-vera-secondary bg-clip-text text-transparent">
+                      <h1 className="text-xl font-bold gradient-text">
                         Vera Protocol
                       </h1>
-                      <p className="text-xs text-slate-500">AI-Mediated Escrow</p>
+                      <p className="text-xs text-slate-500 font-medium">AI-Mediated Escrow</p>
                     </div>
                   </div>
                   
-                  <nav className="hidden md:flex items-center space-x-8">
-                    <a href="/" className="text-slate-600 hover:text-vera-primary transition-colors font-medium">
+                  <nav className="hidden md:flex items-center space-x-1">
+                    <a href="/" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
                       Dashboard
                     </a>
-                    <a href="/create" className="text-slate-600 hover:text-vera-primary transition-colors font-medium">
+                    <a href="/create" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
                       Create Project
                     </a>
-                    <a href="/milestones" className="text-slate-600 hover:text-vera-primary transition-colors font-medium">
+                    <a href="/milestones" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
                       Milestones
                     </a>
-                    <a href="/disputes" className="text-slate-600 hover:text-vera-primary transition-colors font-medium">
+                    <a href="/disputes" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
                       Disputes
                     </a>
                   </nav>
 
                   <div className="flex items-center space-x-3">
-                    <div className="hidden sm:flex items-center space-x-2 text-xs text-slate-500 bg-white/60 px-3 py-1 rounded-full">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <div className="hidden sm:flex items-center space-x-2 text-xs font-semibold text-slate-600 bg-white/80 border border-white/40 px-4 py-2 rounded-full shadow-sm">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-sm"></div>
                       <span>Sepolia</span>
                     </div>
                   </div>
@@ -90,7 +94,7 @@ export default function RootLayout({
             </nav>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-4 py-12">
               {children}
             </main>
 
@@ -100,22 +104,22 @@ export default function RootLayout({
                 <div className="grid md:grid-cols-4 gap-8">
                   <div className="col-span-2">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-lg flex items-center justify-center shadow-md">
                         <span className="text-white font-bold text-sm">V</span>
                       </div>
                       <span className="text-lg font-bold text-slate-900">Vera Protocol</span>
                     </div>
-                    <p className="text-slate-600 mb-4 max-w-md">
+                    <p className="text-slate-600 mb-4 max-w-md leading-relaxed">
                       Eliminating freelance fraud with AI-powered neutral arbitration. 
                       Built for HackXios 2k25 to win both Kiro and Ethereum tracks.
                     </p>
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2 text-sm text-slate-500">
-                        <div className="w-2 h-2 bg-vera-success rounded-full"></div>
+                      <div className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
+                        <div className="w-2 h-2 bg-vera-success rounded-full shadow-sm"></div>
                         <span>95%+ Auto-Release</span>
                       </div>
-                      <div className="flex items-center space-x-2 text-sm text-slate-500">
-                        <div className="w-2 h-2 bg-vera-accent rounded-full"></div>
+                      <div className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
+                        <div className="w-2 h-2 bg-vera-accent rounded-full shadow-sm"></div>
                         <span>&lt;24h Disputes</span>
                       </div>
                     </div>
@@ -144,11 +148,11 @@ export default function RootLayout({
                 
                 <div className="border-t border-slate-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
                   <p className="text-sm text-slate-500">
-                    © 2024 Vera Protocol. Built for HackXios 2k25.
+                    © 2025 Vera Protocol. Built for HackXios 2k25.
                   </p>
                   <div className="flex items-center space-x-6 mt-4 md:mt-0">
-                    <span className="text-xs text-slate-400">Powered by</span>
-                    <div className="flex items-center space-x-4 text-xs text-slate-500">
+                    <span className="text-xs text-slate-400 font-medium">Powered by</span>
+                    <div className="flex items-center space-x-4 text-xs text-slate-500 font-semibold">
                       <span>Ethereum</span>
                       <span>•</span>
                       <span>IPFS</span>
