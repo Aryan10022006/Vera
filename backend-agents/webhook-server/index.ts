@@ -1,10 +1,13 @@
 /**
  * Vera Protocol - Production Webhook Server
  * Uses standalone AI agents instead of MCP dependencies
+ * Implements WebSocket for real-time notifications (Requirement 7)
  */
 
 import express from 'express';
 import crypto from 'crypto';
+import { createServer } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import { Octokit } from '@octokit/rest';
 import { MilestoneVerifier } from '../verification/milestone-verifier.js';
 import { GitHubAgent } from '../github-integration/github-agent.js';
@@ -17,7 +20,145 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 const app = express();
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 3001;
+
+// WebSocket client management
+interface WebSocketClient {
+  ws: WebSocket;
+  address: string;
+  projectIds: Set<string>;
+  connectedAt: Date;
+}
+
+const clients = new Map<string, WebSocketClient>();
+
+// WebSocket connection handler
+wss.on('connection', (ws: WebSocket, req) => {
+  console.log('🔌 New WebSocket connection');
+  
+  // Extract client address from query params or headers
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  const address = url.searchParams.get('address') || 'unknown';
+  
+  const client: WebSocketClient = {
+    ws,
+    address,
+    projectIds: new Set(),
+    connectedAt: new Date()
+  };
+  
+  clients.set(address, client);
+  
+  // Send welcome message
+  ws.send(JSON.stringify({
+    type: 'connection',
+    message: 'Connected to Vera Protocol real-time updates',
+    timestamp: new Date().toISOString()
+  }));
+  
+  // Handle incoming messages (subscribe to projects)
+  ws.on('message', (data: Buffer) => {
+    try {
+      const message = JSON.parse(data.toString());
+      
+      if (message.type === 'subscribe') {
+        message.projectIds?.forEach((id: string) => client.projectIds.add(id));
+        ws.send(JSON.stringify({
+          type: 'subscribed',
+          projectIds: Array.from(client.projectIds),
+          timestamp: new Date().toISOString()
+        }));
+      }
+      
+      if (message.type === 'unsubscribe') {
+        message.projectIds?.forEach((id: string) => client.projectIds.delete(id));
+      }
+    } catch (error) {
+      console.error('WebSocket message error:', error);
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log(`🔌 WebSocket disconnected: ${address}`);
+    clients.delete(address);
+  });
+  
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clients.delete(address);
+  });
+});
+
+// Broadcast functions for real-time notifications (Requirement 7.1, 7.2, 7.3)
+function broadcastMilestoneUpdate(projectId: string, milestoneId: string, status: string, data: any) {
+  const message = {
+    type: 'milestone_update',
+    projectId,
+    milestoneId,
+    status,
+    data,
+    timestamp: new Date().toISOString()
+  };
+  
+  broadcastToProject(projectId, message);
+  console.log(`📢 Broadcast milestone update: ${projectId}/${milestoneId} - ${status}`);
+}
+
+function broadcastPaymentRelease(projectId: string, recipient: string, amount: string, percentage: number) {
+  const message = {
+    type: 'payment_released',
+    projectId,
+    recipient,
+    amount,
+    percentage,
+    timestamp: new Date().toISOString()
+  };
+  
+  broadcastToProject(projectId, message);
+  console.log(`💰 Broadcast payment release: ${amount} (${percentage}%) to ${recipient}`);
+}
+
+function broadcastDisputeAlert(projectId: string, milestoneId: string, disputeType: string, description: string) {
+  const message = {
+    type: 'dispute_raised',
+    projectId,
+    milestoneId,
+    disputeType,
+    description,
+    timestamp: new Date().toISOString(),
+    urgency: 'high'
+  };
+  
+  broadcastToProject(projectId, message);
+  console.log(`⚠️ Broadcast dispute alert: ${projectId}/${milestoneId} - ${disputeType}`);
+}
+
+function broadcastToProject(projectId: string, message: any) {
+  let broadcastCount = 0;
+  
+  clients.forEach((client) => {
+    if (client.projectIds.has(projectId) && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify(message));
+      broadcastCount++;
+    }
+  });
+  
+  if (broadcastCount === 0) {
+    console.log(`📡 No clients subscribed to project ${projectId}`);
+  } else {
+    console.log(`📡 Broadcast to ${broadcastCount} clients for project ${projectId}`);
+  }
+}
+
+function broadcastToAll(message: any) {
+  clients.forEach((client) => {
+    if (client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify(message));
+    }
+  });
+}
 
 // Security middleware
 app.use(helmet());
@@ -123,6 +264,14 @@ app.post('/webhooks/github/milestone-verification', async (req, res) => {
       verification: verificationResult,
       message: 'Milestone verification completed'
     });
+    
+    // Broadcast real-time update (Requirement 7.1)
+    broadcastMilestoneUpdate(
+      projectInfo.projectId,
+      projectInfo.milestoneId,
+      verificationResult.verification?.signedPayload ? 'approved' : 'pending',
+      verificationResult
+    );
 
   } catch (error) {
     console.error('Webhook error:', error);
@@ -272,6 +421,14 @@ app.post('/api/dispute/resolve', async (req, res) => {
       },
       message: 'Dispute resolved using neutral arbitration'
     });
+    
+    // Broadcast dispute alert (Requirement 7.3)
+    broadcastDisputeAlert(
+      projectId,
+      milestoneId,
+      disputeType,
+      description
+    );
 
   } catch (error) {
     console.error('Dispute resolution error:', error);
@@ -294,6 +451,14 @@ app.post('/api/milestone/verify', async (req, res) => {
       success: true,
       verification: verificationResult
     });
+    
+    // Broadcast real-time update (Requirement 7.1)
+    broadcastMilestoneUpdate(
+      projectId,
+      milestoneId,
+      verificationResult.verification?.signedPayload ? 'approved' : 'failed',
+      verificationResult
+    );
 
   } catch (error) {
     console.error('Manual verification error:', error);
@@ -538,9 +703,10 @@ async function storeFreelancerAuth(authData: any) {
 
 // Remove the old resolveDispute function since we're using standalone agents now
 
-// Start server
-app.listen(PORT, () => {
+// Start server with WebSocket support
+server.listen(PORT, () => {
   console.log(`🚀 Vera Protocol Webhook Server running on port ${PORT}`);
+  console.log(`🔌 WebSocket server ready for real-time updates`);
   console.log(`📋 Endpoints available:`);
   console.log(`   GET  /health - Health check`);
   console.log(`   POST /webhooks/github/milestone-verification - GitHub webhooks`);
@@ -548,16 +714,18 @@ app.listen(PORT, () => {
   console.log(`   POST /api/freelancer/onboard - Freelancer onboarding`);
   console.log(`   POST /api/dispute/resolve - Dispute resolution`);
   console.log(`   POST /api/milestone/verify - Manual verification`);
-    console.log(`🤖 Standalone AI Agents initialized:`);
-    console.log(`   ✅ GitHub Integration Agent`);
-    console.log(`   ✅ Arbitration Agent (80/20 Technical/Subjective Split)`);
-    console.log(`   ✅ IPFS Agent`);
-    console.log(`   ✅ Voice Processing Agent`);
-    console.log(`   ✅ Multi-Agent Orchestrator`);
-    console.log(`   ✅ Code Evaluation Agent`);
-    console.log(`   ✅ Document Evaluation Agent`);
-    console.log(`   ✅ Milestone Verifier`);
-    console.log(`🎯 Supported Work Types: ${agentOrchestrator.getAvailableWorkTypes().join(', ')}`);
+  console.log(`   WS   ws://localhost:${PORT}?address=<your_address> - Real-time notifications`);
+  console.log(`🤖 Standalone AI Agents initialized:`);
+  console.log(`   ✅ GitHub Integration Agent`);
+  console.log(`   ✅ Arbitration Agent (80/20 Technical/Subjective Split)`);
+  console.log(`   ✅ IPFS Agent`);
+  console.log(`   ✅ Voice Processing Agent`);
+  console.log(`   ✅ Multi-Agent Orchestrator`);
+  console.log(`   ✅ Code Evaluation Agent`);
+  console.log(`   ✅ Document Evaluation Agent`);
+  console.log(`   ✅ Milestone Verifier`);
+  console.log(`🎯 Supported Work Types: ${agentOrchestrator.getAvailableWorkTypes().join(', ')}`);
+  console.log(`📡 Real-time features: Milestone updates, Payment notifications, Dispute alerts`);
 });
 
 export default app;
