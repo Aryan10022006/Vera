@@ -1,0 +1,41 @@
+{
+  "name": "Code Quality Monitor",
+  "description": "Real-time code quality monitoring with compilation checks and error analysis",
+  "trigger": {
+    "type": "file_save",
+    "patterns": [
+      "**/*.ts",
+      "**/*.js",
+      "**/*.tsx",
+      "**/*.jsx",
+      "**/*.py",
+      "**/*.java",
+      "**/*.cpp",
+      "**/*.c",
+      "**/*.rs",
+      "**/*.go"
+    ]
+  },
+  "action": {
+    "type": "agent_execution",
+    "message": "🔍 **CODE QUALITY MONITOR ACTIVATED**\n\nFile: {{file_path}}\nLanguage: {{file_extension}}\nSize: {{file_size}} bytes\n\n**REAL-TIME ANALYSIS PROTOCOL:**\n\n1. **Compilation Check**\n   - Run language-specific compiler/interpreter\n   - Report syntax errors with line numbers and explanations\n   - Suggest fixes for common compilation issues\n\n2. **Static Code Analysis**\n   - Run ESLint/Pylint/equivalent for the language\n   - Check code style and formatting compliance\n   - Identify potential bugs and code smells\n   - Analyze cyclomatic complexity\n\n3. **Security Scanning**\n   - Scan for common security vulnerabilities\n   - Check for hardcoded secrets or credentials\n   - Analyze dependency security issues\n   - Report potential injection vulnerabilities\n\n4. **Quality Metrics**\n   - Calculate maintainability index\n   - Measure code duplication percentage\n   - Analyze function/class complexity\n   - Check naming convention compliance\n\n5. **Improvement Suggestions**\n   - Provide specific, actionable recommendations\n   - Suggest refactoring opportunities\n   - Recommend best practices for the language\n   - Link to relevant documentation\n\n**OUTPUT FORMAT:**\n```\n✅ COMPILATION: [PASS/FAIL]\n📊 QUALITY SCORE: [0-100]\n🔒 SECURITY SCORE: [0-100]\n⚡ PERFORMANCE IMPACT: [LOW/MEDIUM/HIGH]\n\n🔧 IMMEDIATE ACTIONS NEEDED:\n- [List specific issues to fix]\n\n💡 SUGGESTIONS:\n- [List improvement recommendations]\n```\n\nAnalyze the saved file and provide immediate feedback."
+  },
+  "conditions": [
+    {
+      "type": "file_size_limit",
+      "max_bytes": 1048576
+    },
+    {
+      "type": "not_in_directory",
+      "patterns": ["node_modules", ".git", "dist", "build"]
+    }
+  ],
+  "settings": {
+    "enabled": true,
+    "auto_approve": true,
+    "timeout": 30000,
+    "max_executions_per_hour": 100,
+    "priority": "high",
+    "debounce_ms": 1000
+  }
+}

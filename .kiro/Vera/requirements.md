@@ -1,167 +1,116 @@
-# Vera Protocol - Requirements Specification (EARS Notation)
+# Requirements Document
 
-## System Overview
-Vera Protocol SHALL implement a Pure Web3 AI-mediated escrow system that eliminates freelance fraud through decentralized verification and automated arbitration.
+## Introduction
 
-## R1: Voice-to-IPFS Handshake
-**WHEN** a client initiates a project conversation via voice input,  
-**THE SYSTEM** SHALL convert the human conversation into a structured JSON agreement,  
-**AND** SHALL pin the agreement to IPFS,  
-**AND** SHALL return an IPFS hash as the immutable project reference.
+Vera Protocol is a Pure Web3 AI-mediated freelance escrow platform that uses AI agents as autonomous oracles to solve the trust gap between freelancers and clients. The system eliminates 'Subjectivity Loopholes' through an 80/20 payment split (80% objective/technical, 20% subjective variance) and implements a 'Silent Consent' protocol where funds auto-release after 72 hours of client inactivity.
 
-### R1.1: Voice Processing
-**THE SYSTEM** SHALL accept voice input in multiple languages,  
-**AND** SHALL transcribe speech to text with >95% accuracy,  
-**AND** SHALL extract project requirements, deliverables, timeline, and payment terms.
+## Glossary
 
-### R1.2: Agreement Structure
-**THE SYSTEM** SHALL generate a JSON agreement containing:
-- Project title and description
-- Technical requirements (80% of scope)
-- Subjective requirements (20% of scope)
-- Milestone definitions with acceptance criteria
-- Payment amount and schedule
-- Deadline timestamps
-- Client and freelancer wallet addresses
+- **Vera_Protocol**: The complete AI-mediated freelance escrow system
+- **AI_Sentinel**: The neutral AI arbitrator that evaluates milestone completion
+- **Voice_Handshake**: Voice-to-text interface for creating project agreements
+- **IPFS_Agreement**: Decentralized storage of project requirements and metadata
+- **GitHub_Audit**: Automated code quality and completion verification via MCP
+- **EIP_712_Signature**: Cryptographic signature standard for secure payouts
+- **Silent_Consent**: Auto-release mechanism after 72 hours of client inactivity
+- **Objective_Milestone**: Technical deliverable worth 80% of payment
+- **Subjective_Variance**: Style/preference buffer worth 20% of payment
+- **MCP_Server**: Model Context Protocol server for GitHub integration
 
-### R1.3: IPFS Pinning
-**THE SYSTEM** SHALL pin the agreement JSON to IPFS,  
-**AND** SHALL ensure the content remains accessible for the project duration,  
-**AND** SHALL provide the IPFS hash to both parties.
+## Requirements
 
-## R2: Verification Logic
-**WHEN** a freelancer submits work for milestone verification,  
-**THE KIRO AGENT** SHALL use #[fetch] to read the IPFS agreement,  
-**AND** SHALL use #[github] to audit the freelancer's code repository,  
-**AND** SHALL compare deliverables against the original requirements.
+### Requirement 1: Voice-to-IPFS Project Creation
 
-### R2.1: IPFS Agreement Retrieval
-**THE AGENT** SHALL fetch the project agreement from IPFS using the provided hash,  
-**AND** SHALL parse the JSON structure to extract verification criteria,  
-**AND** SHALL validate the agreement integrity.
+**User Story:** As a non-technical client, I want to create project agreements using voice commands, so that I can set up escrow contracts without coding knowledge.
 
-### R2.2: Code Audit Process
-**THE AGENT** SHALL access the freelancer's GitHub repository,  
-**AND** SHALL analyze code quality, functionality, and security,  
-**AND** SHALL verify that all technical requirements are met,  
-**AND** SHALL generate an audit report with pass/fail status.
+#### Acceptance Criteria
 
-### R2.3: Milestone Assessment
-**THE AGENT** SHALL evaluate each milestone against defined acceptance criteria,  
-**AND** SHALL calculate completion percentage for technical elements (80%),  
-**AND** SHALL flag subjective elements (20%) for separate review,  
-**AND** SHALL determine if milestone qualifies for automatic payout.
+1. WHEN a user speaks project requirements, THE Voice_Handshake SHALL convert speech to structured text within 2 seconds
+2. WHEN project details are captured, THE Vera_Protocol SHALL generate a standardized agreement format
+3. WHEN agreement is finalized, THE Vera_Protocol SHALL store the agreement metadata on IPFS
+4. WHEN IPFS storage completes, THE Vera_Protocol SHALL return a content hash for blockchain reference
+5. THE Voice_Handshake SHALL support natural language input for project scope, timeline, and budget
 
-## R3: Typed Data Signing
-**IF** the audit passes technical requirements,  
-**THE AGENT** SHALL generate an EIP-712 compliant signature for the payout,  
-**AND** SHALL include milestone details, payment amount, and verification timestamp,  
-**AND** SHALL submit the signature to the smart contract.
+### Requirement 2: Smart Contract Escrow Management
 
-### R3.1: EIP-712 Structure with Domain Separation
-**THE SYSTEM** SHALL implement typed data structure containing:
-- Domain separator with contract address and chain ID for replay attack prevention
-- Network-specific domain separator to prevent cross-chain signature reuse
-- Milestone identifier and completion status
-- Payment recipient address and amount
-- Verification timestamp and agent signature
-- IPFS hash reference for audit trail
+**User Story:** As a freelancer, I want secure escrow management, so that I receive guaranteed payment upon milestone completion.
 
-**THE DOMAIN SEPARATOR** SHALL include:
-- Contract name: "VeraProtocol"
-- Contract version: "1.0.0"  
-- Chain ID: Network-specific identifier (11155111 for Sepolia)
-- Verifying contract address: Deployed VeraEscrow contract address
+#### Acceptance Criteria
 
-### R3.2: Signature Generation
-**THE AGENT** SHALL sign the typed data using a secure private key,  
-**AND** SHALL ensure signature validity can be verified on-chain,  
-**AND** SHALL include all necessary parameters for contract execution.
+1. WHEN a project agreement is created, THE Vera_Protocol SHALL deploy an escrow smart contract on Ethereum
+2. WHEN client deposits funds, THE Vera_Protocol SHALL lock 80% for objective milestones and 20% for subjective variance
+3. WHEN milestone completion is verified, THE Vera_Protocol SHALL automatically release the corresponding payment
+4. IF client disputes within 72 hours, THEN THE Vera_Protocol SHALL pause auto-release and initiate arbitration
+5. WHEN 72 hours pass without dispute, THE Vera_Protocol SHALL execute silent consent release
 
-## R4: Smart Escrow Contract
-**THE SOLIDITY CONTRACT** SHALL be deployed on Sepolia testnet,  
-**AND** SHALL hold escrowed funds securely,  
-**AND** SHALL release funds only upon verifying the AI agent's signature,  
-**AND** SHALL implement multi-signature security for critical operations.
+### Requirement 3: GitHub MCP-Driven Code Audit
 
-### R4.1: Fund Management
-**THE CONTRACT** SHALL accept ETH deposits from clients,  
-**AND** SHALL lock funds until milestone completion,  
-**AND** SHALL support partial releases based on milestone progress,  
-**AND** SHALL handle refunds for disputed or cancelled projects.
+**User Story:** As an AI sentinel, I want to automatically verify code deliverables, so that I can objectively assess milestone completion.
 
-### R4.2: Signature Verification
-**THE CONTRACT** SHALL verify EIP-712 signatures from authorized AI agents,  
-**AND** SHALL validate signature parameters against stored project data,  
-**AND** SHALL execute payouts automatically upon successful verification,  
-**AND** SHALL emit events for all state changes.
+#### Acceptance Criteria
 
-### R4.3: Emergency Controls
-**THE CONTRACT** SHALL include pause functionality for security incidents,  
-**AND** SHALL support contract upgrades through proxy patterns,  
-**AND** SHALL implement timelock delays for critical parameter changes.
+1. WHEN a freelancer submits a GitHub repository, THE GitHub_Audit SHALL analyze code quality using MCP servers
+2. WHEN code analysis completes, THE AI_Sentinel SHALL verify requirements against deliverables
+3. WHEN technical requirements are met, THE Vera_Protocol SHALL mark objective milestones as complete
+4. IF code fails quality checks, THEN THE AI_Sentinel SHALL provide specific feedback for remediation
+5. THE GitHub_Audit SHALL validate functionality, security, and documentation standards
 
-## R5: 80/20 Variance Buffer (CORE SYSTEM INVARIANT)
-**THE SYSTEM** SHALL implement an 80/20 split as an immutable protocol invariant,  
-**WHERE** 80% of payment MUST be tied to objective technical milestones,  
-**AND** 20% SHALL be held in a variance buffer for subjective evaluation,  
-**AND** this ratio SHALL NOT be modifiable by any party or governance mechanism.
+### Requirement 4: EIP-712 Cryptographic Payout Process
 
-### R5.1: Technical Milestone Auto-Release (INVARIANT)
-**WHEN** technical requirements are verified as complete,  
-**THE SYSTEM** SHALL automatically release 80% of the milestone payment,  
-**REGARDLESS** of subjective disputes, style preferences, or client objections,  
-**AND** this release SHALL be irreversible and immediate.
+**User Story:** As a system administrator, I want secure payment authorization, so that all fund releases are cryptographically verified.
 
-### R5.2: Subjective Buffer Management
-**THE SYSTEM** SHALL hold 20% of payment for subjective elements,  
-**AND** SHALL require explicit approval from both parties OR timeout resolution,  
-**AND** SHALL provide dispute resolution mechanisms for contested elements.
+#### Acceptance Criteria
 
-## R6: 72-Hour Silent Consent Protocol (CORE SYSTEM INVARIANT)
-**THE SYSTEM** SHALL implement Silent Consent as an immutable protocol invariant,  
-**WHERE** funds MUST automatically release after 72 hours of client non-response,  
-**REGARDLESS** of external factors or manual intervention attempts.
+1. WHEN milestone completion is verified, THE Vera_Protocol SHALL generate an EIP-712 typed data structure
+2. WHEN payout is authorized, THE AI_Sentinel SHALL sign the payment instruction using EIP-712 standard
+3. WHEN signature is valid, THE Vera_Protocol SHALL execute the blockchain transaction
+4. THE EIP_712_Signature SHALL include milestone ID, amount, recipient, and timestamp
+5. WHEN transaction completes, THE Vera_Protocol SHALL emit a payment confirmation event
 
-**WHEN** a milestone is submitted and passes AI audit,  
-**THE SYSTEM** SHALL notify the client of completion,  
-**AND** SHALL start a 72-hour countdown timer,  
-**AND** SHALL automatically release funds if no objection is raised within 72 hours.
+### Requirement 5: AI-Mediated Dispute Resolution
 
-### R6.1: Notification System
-**THE SYSTEM** SHALL send notifications via multiple channels (email, wallet, platform),  
-**AND** SHALL provide clear instructions for reviewing and approving/rejecting work,  
-**AND** SHALL include direct links to submitted deliverables.
+**User Story:** As a neutral arbitrator, I want to resolve disputes objectively, so that both parties receive fair treatment.
 
-### R6.2: Automatic Release
-**IF** no client response is received within 72 hours,  
-**THE SYSTEM** SHALL automatically trigger fund release,  
-**AND** SHALL execute the payout transaction,  
-**AND** SHALL update project status to milestone completed.
+#### Acceptance Criteria
 
-### R6.3: Dispute Window
-**THE CLIENT** SHALL have 24 additional hours after auto-release to raise disputes,  
-**AND** SHALL provide specific technical objections with evidence,  
-**AND** SHALL trigger dispute resolution process if valid concerns are raised.
+1. WHEN a dispute is raised, THE AI_Sentinel SHALL analyze all submitted evidence within 24 hours
+2. WHEN evaluating disputes, THE AI_Sentinel SHALL prioritize original IPFS agreement over new requests
+3. WHEN technical work meets specifications, THE AI_Sentinel SHALL recommend pro-rata payment release
+4. IF subjective elements are disputed, THEN THE AI_Sentinel SHALL hold 20% variance buffer for human review
+5. THE AI_Sentinel SHALL provide transparent reasoning for all arbitration decisions
 
-## R7: Decentralization Requirements
-**THE SYSTEM** SHALL operate without traditional databases,  
-**AND** SHALL store all data on IPFS or blockchain,  
-**AND** SHALL ensure no single point of failure,  
-**AND** SHALL maintain censorship resistance.
+### Requirement 6: Decentralized Data Architecture
 
-### R7.1: Data Storage
-**ALL PROJECT DATA** SHALL be stored on IPFS with content addressing,  
-**ALL FINANCIAL TRANSACTIONS** SHALL be recorded on blockchain,  
-**ALL AGENT DECISIONS** SHALL be cryptographically signed and verifiable.
+**User Story:** As a Web3 advocate, I want no centralized databases, so that the platform remains truly decentralized.
 
-### R7.2: Agent Decentralization
-**THE AI AGENTS** SHALL operate as independent oracles,  
-**AND** SHALL be replaceable without system disruption,  
-**AND** SHALL provide transparent audit trails for all decisions.
+#### Acceptance Criteria
 
-## R8: Security Requirements
-**THE SYSTEM** SHALL implement zero-trust architecture,  
-**AND** SHALL encrypt all sensitive communications,  
-**AND** SHALL undergo security audits before mainnet deployment,  
-**AND** SHALL include bug bounty programs for ongoing security validation.
+1. THE Vera_Protocol SHALL store all agreement metadata on IPFS without centralized databases
+2. THE Vera_Protocol SHALL use Ethereum blockchain for all financial transactions and state management
+3. WHEN data is needed, THE Vera_Protocol SHALL retrieve information directly from IPFS and blockchain
+4. THE Vera_Protocol SHALL maintain data integrity through cryptographic hashes and signatures
+5. WHERE possible, THE Vera_Protocol SHALL operate without reliance on centralized services
+
+### Requirement 7: Real-time Project Status Updates
+
+**User Story:** As a project stakeholder, I want real-time updates, so that I can track progress without manual checking.
+
+#### Acceptance Criteria
+
+1. WHEN milestone status changes, THE Vera_Protocol SHALL broadcast updates via WebSocket connections
+2. WHEN payments are released, THE Vera_Protocol SHALL notify both parties immediately
+3. WHEN disputes arise, THE Vera_Protocol SHALL alert relevant stakeholders within 1 minute
+4. THE Vera_Protocol SHALL maintain connection state for offline/online transitions
+5. WHEN network connectivity is restored, THE Vera_Protocol SHALL sync all missed updates
+
+### Requirement 8: Voice-First User Interface
+
+**User Story:** As a creative professional, I want voice-controlled interactions, so that I can manage projects hands-free.
+
+#### Acceptance Criteria
+
+1. THE Voice_Handshake SHALL recognize voice commands with 98% accuracy for project management
+2. WHEN voice input is unclear, THE Vera_Protocol SHALL request clarification before proceeding
+3. THE Voice_Handshake SHALL support multiple languages for global accessibility
+4. WHEN voice processing fails, THE Vera_Protocol SHALL provide visual fallback interfaces
+5. THE Voice_Handshake SHALL process commands within 1000ms for responsive interaction

@@ -1,0 +1,39 @@
+{
+  "name": "Design Validation Checker",
+  "description": "Automated design file validation and quality assessment for visual deliverables",
+  "trigger": {
+    "type": "file_save",
+    "patterns": [
+      "**/*.fig",
+      "**/*.sketch",
+      "**/*.psd",
+      "**/*.ai",
+      "**/*.svg",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.webp"
+    ]
+  },
+  "action": {
+    "type": "agent_execution",
+    "message": "🎨 **DESIGN VALIDATION CHECKER ACTIVATED**\n\nDesign File: {{file_path}}\nFormat: {{file_extension}}\nSize: {{file_size}} bytes\nDimensions: {{image_dimensions}}\n\n**COMPREHENSIVE DESIGN ANALYSIS:**\n\n1. **Technical Specifications**\n   - Verify image resolution and DPI\n   - Check color space and profile (RGB, CMYK, etc.)\n   - Analyze file compression and quality\n   - Validate dimensions against requirements\n   - Assess file format appropriateness\n\n2. **Visual Design Quality**\n   - Analyze color harmony and contrast ratios\n   - Check typography usage and hierarchy\n   - Evaluate composition and visual balance\n   - Assess white space and layout effectiveness\n   - Analyze visual consistency and alignment\n\n3. **Accessibility Compliance**\n   - Check color contrast ratios (WCAG guidelines)\n   - Verify text readability and size\n   - Analyze color-blind accessibility\n   - Assess keyboard navigation support\n   - Validate alt-text and descriptions\n\n4. **Brand Guidelines Compliance**\n   - Verify brand color usage\n   - Check logo placement and sizing\n   - Analyze typography consistency\n   - Assess brand voice and messaging\n   - Validate style guide adherence\n\n5. **User Experience Evaluation**\n   - Analyze information hierarchy\n   - Check call-to-action visibility\n   - Evaluate navigation clarity\n   - Assess mobile responsiveness\n   - Analyze user flow and interactions\n\n6. **Performance Optimization**\n   - Check file size optimization\n   - Analyze loading performance impact\n   - Suggest compression improvements\n   - Evaluate scalability across devices\n   - Assess print quality (if applicable)\n\n**DESIGN INTELLIGENCE:**\n- Compare against design best practices\n- Suggest improvements for visual impact\n- Recommend accessibility enhancements\n- Provide performance optimization tips\n\n**OUTPUT FORMAT:**\n```\n🎯 DESIGN QUALITY: [0-100]\n🔍 TECHNICAL SCORE: [0-100]\n♿ ACCESSIBILITY: [0-100]\n🏷️ BRAND COMPLIANCE: [0-100]\n⚡ PERFORMANCE: [0-100]\n\n⚠️ ISSUES DETECTED:\n- [Specific design issues]\n\n💡 RECOMMENDATIONS:\n- [Actionable improvements]\n\n🔧 TECHNICAL FIXES:\n- [File optimization suggestions]\n```\n\nAnalyze design file and provide comprehensive feedback."
+  },
+  "conditions": [
+    {
+      "type": "file_size_limit",
+      "max_bytes": 52428800
+    },
+    {
+      "type": "is_image_file"
+    }
+  ],
+  "settings": {
+    "enabled": true,
+    "auto_approve": true,
+    "timeout": 45000,
+    "max_executions_per_hour": 30,
+    "priority": "medium",
+    "debounce_ms": 3000
+  }
+}

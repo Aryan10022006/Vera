@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Contract Security & Requirements Check",
+  "description": "When a file is saved in the /contracts directory, run a security scan and verify that the code logic matches the requirements.md in the spec folder",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "/contracts/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I just saved a contract file. Please run a security scan on this contract and check if the code logic matches the requirements.md in my spec folder. Specifically: 1) Run security analysis to identify vulnerabilities, gas optimization issues, and potential exploits 2) Compare the contract logic against the requirements.md specifications 3) Report any discrepancies between implementation and requirements 4) Suggest fixes for security issues or requirement mismatches"
+  }
+}

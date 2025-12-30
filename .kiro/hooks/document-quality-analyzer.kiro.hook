@@ -1,0 +1,37 @@
+{
+  "name": "Document Quality Analyzer",
+  "description": "Real-time document quality analysis for reports, presentations, and written content",
+  "trigger": {
+    "type": "file_save",
+    "patterns": [
+      "**/*.md",
+      "**/*.txt",
+      "**/*.docx",
+      "**/*.pdf",
+      "**/*.pptx",
+      "**/*.html",
+      "**/*.rst"
+    ]
+  },
+  "action": {
+    "type": "agent_execution",
+    "message": "📝 **DOCUMENT QUALITY ANALYZER ACTIVATED**\n\nDocument: {{file_path}}\nType: {{file_extension}}\nSize: {{file_size}} bytes\nLast Modified: {{last_modified}}\n\n**COMPREHENSIVE DOCUMENT ANALYSIS:**\n\n1. **Content Structure Analysis**\n   - Analyze document hierarchy and organization\n   - Check for proper heading structure (H1, H2, H3, etc.)\n   - Verify table of contents accuracy\n   - Assess logical flow and coherence\n\n2. **Language Quality Assessment**\n   - Run grammar and spell checking\n   - Analyze sentence structure and readability\n   - Check for passive voice overuse\n   - Identify unclear or ambiguous phrases\n   - Calculate readability scores (Flesch-Kincaid, etc.)\n\n3. **Content Quality Evaluation**\n   - Assess factual accuracy and consistency\n   - Check for plagiarism and originality\n   - Analyze argument strength and evidence\n   - Verify citations and references\n   - Evaluate completeness against requirements\n\n4. **Format and Style Compliance**\n   - Check formatting consistency\n   - Verify style guide adherence\n   - Analyze visual presentation quality\n   - Assess accessibility compliance\n   - Validate document metadata\n\n5. **Technical Accuracy (if applicable)**\n   - Verify technical terms and concepts\n   - Check code examples and syntax\n   - Validate mathematical formulas\n   - Assess diagram accuracy and clarity\n\n6. **Audience Appropriateness**\n   - Analyze tone and register\n   - Assess complexity level for target audience\n   - Check cultural sensitivity\n   - Evaluate engagement and persuasiveness\n\n**INTELLIGENT FEEDBACK:**\n- Highlight specific areas needing improvement\n- Suggest alternative phrasings and structures\n- Recommend additional content or sections\n- Provide style and formatting corrections\n\n**OUTPUT FORMAT:**\n```\n📊 OVERALL QUALITY: [0-100]\n📖 READABILITY SCORE: [Grade Level]\n✍️ GRAMMAR SCORE: [0-100]\n🎯 CONTENT COMPLETENESS: [0-100]\n🎨 FORMAT COMPLIANCE: [0-100]\n\n⚠️ ISSUES FOUND:\n- [Specific issues with line numbers]\n\n💡 IMPROVEMENTS:\n- [Actionable suggestions]\n\n🔍 MISSING ELEMENTS:\n- [Required sections or content]\n```\n\nAnalyze document quality and provide detailed feedback."
+  },
+  "conditions": [
+    {
+      "type": "file_size_limit",
+      "max_bytes": 10485760
+    },
+    {
+      "type": "not_empty_file"
+    }
+  ],
+  "settings": {
+    "enabled": true,
+    "auto_approve": true,
+    "timeout": 60000,
+    "max_executions_per_hour": 50,
+    "priority": "medium",
+    "debounce_ms": 2000
+  }
+}

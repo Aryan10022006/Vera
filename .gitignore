@@ -174,9 +174,6 @@ junit.xml
 # Monitoring
 .sentry/
 
-# Kiro development files (not needed in production)
-.kiro/hooks/
-.kiro/settings/
 
 # Keep steering files for documentation
 !.kiro/steering/

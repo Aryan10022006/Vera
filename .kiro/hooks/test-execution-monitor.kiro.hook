@@ -1,0 +1,29 @@
+{
+  "name": "Test Execution Monitor",
+  "description": "Automated test execution and failure analysis on code commits",
+  "trigger": {
+    "type": "git_commit",
+    "branch": "*"
+  },
+  "action": {
+    "type": "agent_execution",
+    "message": "🧪 **TEST EXECUTION MONITOR ACTIVATED**\n\nCommit: {{commit_sha}}\nAuthor: {{commit_author}}\nMessage: {{commit_message}}\nFiles Changed: {{files_changed}}\n\n**AUTOMATED TESTING PROTOCOL:**\n\n1. **Test Discovery**\n   - Scan for test files (*.test.*, *.spec.*, test_*.py, etc.)\n   - Identify test frameworks (Jest, Mocha, PyTest, JUnit, etc.)\n   - Detect test configuration files\n   - Map tests to changed code files\n\n2. **Test Execution**\n   - Run unit tests for changed modules\n   - Execute integration tests if applicable\n   - Run end-to-end tests for critical paths\n   - Measure test execution time and performance\n\n3. **Coverage Analysis**\n   - Calculate code coverage percentage\n   - Identify uncovered lines and branches\n   - Compare coverage with previous commits\n   - Flag coverage regressions\n\n4. **Failure Analysis**\n   - Parse test failure messages and stack traces\n   - Categorize failures (syntax, logic, integration, etc.)\n   - Identify patterns in failing tests\n   - Suggest potential root causes\n\n5. **Performance Impact**\n   - Measure test suite execution time\n   - Identify slow or flaky tests\n   - Analyze memory usage during tests\n   - Report performance regressions\n\n6. **Quality Gates**\n   - Enforce minimum coverage thresholds\n   - Block commits with failing critical tests\n   - Require tests for new functionality\n   - Validate test quality and effectiveness\n\n**INTELLIGENT RECOMMENDATIONS:**\n- Suggest missing test cases based on code changes\n- Recommend test refactoring for better maintainability\n- Identify opportunities for test automation\n- Propose performance optimizations\n\n**OUTPUT FORMAT:**\n```\n✅ TESTS PASSED: [X/Y]\n📊 COVERAGE: [XX%] (Δ +/-X%)\n⏱️ EXECUTION TIME: [X.Xs]\n🎯 QUALITY SCORE: [0-100]\n\n❌ FAILURES:\n- [Test name]: [Failure reason]\n\n🔍 MISSING COVERAGE:\n- [File:Line]: [Uncovered code]\n\n💡 RECOMMENDATIONS:\n- [Specific suggestions]\n```\n\nExecute comprehensive test analysis now."
+  },
+  "conditions": [
+    {
+      "type": "has_test_files",
+      "patterns": ["**/*.test.*", "**/*.spec.*", "**/test_*", "**/tests/**"]
+    },
+    {
+      "type": "commit_affects_code",
+      "patterns": ["**/*.ts", "**/*.js", "**/*.py", "**/*.java"]
+    }
+  ],
+  "settings": {
+    "enabled": true,
+    "auto_approve": true,
+    "timeout": 300000,
+    "max_executions_per_hour": 50,
+    "priority": "high"
+  }
+}
