@@ -16,8 +16,10 @@ sequenceDiagram
     participant VoiceUI as Voice Interface
     participant IPFS
     participant SmartContract as Escrow Contract
-    participant AI as AI Sentinel
-    participant GitHub as GitHub MCP
+    participant WebSocket as WebSocket Server
+    participant AI as Production AI Verifier
+    participant GitHub as GitHub API
+    participant LLM as OpenAI/Anthropic
     participant Freelancer
 
     Client->>VoiceUI: Speak project requirements
@@ -27,31 +29,39 @@ sequenceDiagram
     Client->>SmartContract: Deposit funds (80% objective, 20% subjective)
     
     Freelancer->>GitHub: Submit code deliverable
-    GitHub->>AI: Trigger MCP audit
-    AI->>GitHub: Analyze code quality & requirements
-    GitHub-->>AI: Return audit results
+    GitHub->>AI: Trigger webhook verification
+    AI->>GitHub: Fetch repository code via GitHub API
+    GitHub-->>AI: Return code files
+    AI->>LLM: Send code + requirements for analysis
+    LLM-->>AI: Return structured evaluation
     
     AI->>SmartContract: Generate EIP-712 signature
     SmartContract->>SmartContract: Verify signature
-    SmartContract->>Freelancer: Release payment (if verified)
+    SmartContract->>Freelancer: Release 80% payment (if approved)
+    SmartContract->>WebSocket: Broadcast payment notification
+    WebSocket->>Client: Real-time update
+    WebSocket->>Freelancer: Real-time update
     
     alt Client disputes within 72h
         Client->>AI: Raise dispute
-        AI->>AI: Analyze evidence
+        AI->>WebSocket: Broadcast dispute alert
+        AI->>AI: Analyze evidence using LLM
         AI->>SmartContract: Arbitration decision
     else Silent consent (72h passed)
-        SmartContract->>Freelancer: Auto-release funds
+        SmartContract->>Freelancer: Auto-release remaining 20%
+        SmartContract->>WebSocket: Broadcast completion
     end
 ```
 
 ### Component Architecture
 
-The system consists of four main layers:
+The system consists of five main layers:
 
-1. **Presentation Layer**: Next.js frontend with voice interface
-2. **AI Agent Layer**: Autonomous verification and arbitration agents
-3. **Blockchain Layer**: Ethereum smart contracts for escrow management
-4. **Storage Layer**: IPFS for decentralized metadata storage
+1. **Presentation Layer**: Next.js frontend with voice interface and WebSocket client
+2. **Real-Time Layer**: WebSocket server for instant status updates and notifications
+3. **AI Verification Layer**: Production AI agents using OpenAI/Anthropic LLM APIs
+4. **Blockchain Layer**: Ethereum smart contracts for escrow management
+5. **Storage Layer**: IPFS for decentralized metadata storage
 
 ## Components and Interfaces
 
@@ -75,23 +85,25 @@ The system consists of four main layers:
   - `EIP712Verifier.sol`: Signature verification for payouts
 - **Interface**: Web3 provider integration with typed contract calls
 
-### AI Sentinel Agent
-- **Purpose**: Objective milestone verification and dispute arbitration
-- **Technology**: TypeScript agents with MCP server integration
+### Production AI Verifier
+- **Purpose**: Objective milestone verification and dispute arbitration using LLM APIs
+- **Technology**: TypeScript agents with direct OpenAI/Anthropic API integration
 - **Key Functions**:
-  - Code quality analysis via GitHub MCP
+  - Code quality analysis via GitHub API + LLM evaluation
   - Requirements verification against IPFS agreements
   - EIP-712 signature generation for verified payouts
-- **Interface**: WebSocket for real-time status updates
+  - Real-time status broadcasting via WebSocket
+- **Interface**: REST API + WebSocket for real-time updates
 
-### GitHub MCP Server
+### GitHub API Integration
 - **Purpose**: Automated code analysis and repository verification
-- **Technology**: Model Context Protocol with GitHub API integration
+- **Technology**: GitHub REST API v3 with Octokit client library
 - **Capabilities**:
   - Repository structure analysis
-  - Code quality metrics
-  - Security vulnerability scanning
-  - Documentation completeness verification
+  - Code fetching and file retrieval
+  - Commit history tracking
+  - Branch and PR status checking
+- **Integration**: Used by Production AI Verifier to fetch code for LLM analysis
 
 ## Data Models
 
@@ -203,8 +215,8 @@ Now I need to use the prework tool to analyze the acceptance criteria before wri
 *For any* dispute raised within 72 hours of milestone completion, the system should immediately pause auto-release and initiate arbitration
 **Validates: Requirements 2.4**
 
-### Property 8: GitHub MCP Code Analysis
-*For any* submitted GitHub repository, the MCP server should analyze code quality and return structured assessment results
+### Property 8: LLM Code Analysis
+*For any* submitted GitHub repository, the Production AI Verifier should fetch code via GitHub API and analyze quality using OpenAI GPT-4 or Anthropic Claude, returning structured assessment results
 **Validates: Requirements 3.1, 3.5**
 
 ### Property 9: Requirements Verification Consistency

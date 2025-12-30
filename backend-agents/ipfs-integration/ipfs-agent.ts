@@ -283,26 +283,6 @@ export class IPFSAgent {
       throw new Error(`Evidence pinning failed: ${error.message}`);
     }
   }
-    return {
-      version: '1.0.0',
-      protocol: 'vera-escrow',
-      agreement: {
-        ...agreement,
-        ipfsMetadata: {
-          pinned: new Date().toISOString(),
-          gateway: this.ipfsGateway,
-          redundancy: 'multi-gateway',
-          verification: 'sha256-hash'
-        }
-      },
-      schema: {
-        technicalRequirements: agreement.requirements.technical.length,
-        subjectiveRequirements: agreement.requirements.subjective.length,
-        paymentSplit: `${agreement.payment.technicalPercentage}/${agreement.payment.subjectivePercentage}`,
-        silentConsent: `${agreement.timeline.silentConsentHours}h`
-      }
-    };
-  }
 
   // Private helper methods
 

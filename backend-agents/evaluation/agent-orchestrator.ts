@@ -335,7 +335,7 @@ export class AgentOrchestrator {
 
     // Add high-priority recommendations first
     const lowScoreEvaluations = Array.from(evaluations.entries())
-      .filter(([_, eval]) => eval.overallScore < 70)
+      .filter(([_, evaluation]) => evaluation.overallScore < 70)
       .sort(([_, a], [__, b]) => a.overallScore - b.overallScore);
 
     if (lowScoreEvaluations.length > 0) {
@@ -346,7 +346,7 @@ export class AgentOrchestrator {
 
     // Add confidence-based recommendations
     const lowConfidenceEvaluations = Array.from(evaluations.entries())
-      .filter(([_, eval]) => eval.confidence < 60);
+      .filter(([_, evaluation]) => evaluation.confidence < 60);
 
     if (lowConfidenceEvaluations.length > 0) {
       recommendations.push(

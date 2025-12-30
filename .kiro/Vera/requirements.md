@@ -46,18 +46,18 @@ Vera Protocol is a Pure Web3 AI-mediated freelance escrow platform that uses AI 
 4. IF client disputes within 72 hours, THEN THE Vera_Protocol SHALL pause auto-release and initiate arbitration
 5. WHEN 72 hours pass without dispute, THE Vera_Protocol SHALL execute silent consent release
 
-### Requirement 3: LLM-Powered Code Audit
+### Requirement 3: LLM-Powered Code Verification
 
 **User Story:** As an AI sentinel, I want to automatically verify code deliverables using production LLM APIs, so that I can objectively assess milestone completion.
 
 #### Acceptance Criteria
 
-1. WHEN a freelancer submits a GitHub repository, THE GitHub_Audit SHALL analyze code quality using LLM APIs (OpenAI GPT-4 or Anthropic Claude)
+1. WHEN a freelancer submits a GitHub repository, THE GitHub_Agent SHALL fetch code using GitHub API and analyze quality using LLM APIs (OpenAI GPT-4 or Anthropic Claude)
 2. WHEN code analysis completes, THE AI_Sentinel SHALL verify requirements against deliverables using structured LLM prompts
 3. WHEN technical requirements are met (80%+ score), THE Vera_Protocol SHALL mark objective milestones as complete
 4. IF code fails quality checks, THEN THE AI_Sentinel SHALL provide specific, actionable feedback for remediation
 5. THE GitHub_Audit SHALL validate functionality, security, and documentation standards using multi-stage LLM evaluation
-6. THE AI_Sentinel SHALL use GitHub API for code retrieval and LLM for intelligent analysis (NOT Kiro/MCP in production)
+6. THE AI_Sentinel SHALL use GitHub API for code retrieval and direct LLM API calls for intelligent analysis (production architecture uses OpenAI/Anthropic, NOT Kiro/MCP)
 
 ### Requirement 4: EIP-712 Cryptographic Payout Process
 
