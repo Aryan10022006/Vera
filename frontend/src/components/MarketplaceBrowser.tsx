@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { Search, Clock, DollarSign, Code, Loader2 } from 'lucide-react';
+import { Search, Clock, DollarSign, Code, Loader2, LogIn } from 'lucide-react';
 import { useMarketplaceProjects } from '../hooks/useProjects';
 import { formatEther } from 'viem';
 import { useAccount } from 'wagmi';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import ProjectDetailView from './ProjectDetailView';
 
 export default function MarketplaceBrowser() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProject, setSelectedProject] = useState<any>(null);
   const { address } = useAccount();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const projects = useMarketplaceProjects();
 
   const filteredProjects = projects.filter(project =>
@@ -30,6 +36,12 @@ export default function MarketplaceBrowser() {
     return `${days} days ago`;
   };
 
+  const handleApply = () => {
+    if (!isAuthenticated) {
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Search Bar */}
@@ -44,16 +56,9 @@ export default function MarketplaceBrowser() {
         />
       </div>
 
-      {!address && (
-        <div className="card p-8 text-center">
-          <p className="text-slate-400 text-lg mb-2">Connect your wallet to browse projects</p>
-          <p className="text-slate-500">You need to be connected to apply to projects</p>
-        </div>
-      )}
-
       {/* Project Listings */}
       <div className="grid gap-6">
-        {projects.length === 0 && address ? (
+        {projects.length === 0 ? (
           <div className="card p-12 text-center">
             <Loader2 className="w-12 h-12 mx-auto mb-4 text-vera-500 animate-spin" />
             <p className="text-slate-400 text-lg">Loading projects...</p>
@@ -124,13 +129,30 @@ export default function MarketplaceBrowser() {
               </div>
 
               <div className="flex gap-4">
+                {!isAuthenticated ? (
+                  <button 
+                    onClick={handleApply}
+                    className="btn-primary flex-1 inline-flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Sign In to Apply
+                  </button>
+                ) : address && project.client.toLowerCase() === address.toLowerCase() ? (
+                  <button className="btn-secondary flex-1" disabled>
+                    Your Project
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setSelectedProject(project)}
+                    className="btn-primary flex-1"
+                  >
+                    Apply Now
+                  </button>
+                )}
                 <button 
-                  className="btn-primary flex-1"
-                  disabled={!address || project.client.toLowerCase() === address.toLowerCase()}
+                  onClick={() => setSelectedProject(project)}
+                  className="btn-ghost"
                 >
-                  {project.client.toLowerCase() === address?.toLowerCase() ? 'Your Project' : 'Apply Now'}
-                </button>
-                <button className="btn-ghost">
                   View Details
                 </button>
               </div>
@@ -138,6 +160,13 @@ export default function MarketplaceBrowser() {
           ))
         )}
       </div>
+
+      {selectedProject && (
+        <ProjectDetailView
+          project={selectedProject}
+          onClose={() => setSelectedProject(null)}
+        />
+      )}
     </div>
   );
 }

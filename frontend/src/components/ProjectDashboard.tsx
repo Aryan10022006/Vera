@@ -2,10 +2,13 @@ import { Clock, DollarSign, CheckCircle, AlertCircle, MessageCircle, User, Brief
 import { useMyProjects } from '../hooks/useProjects';
 import { useAccount } from 'wagmi';
 import { formatEther } from 'viem';
+import { useState } from 'react';
+import ProjectDetailView from './ProjectDetailView';
 
 export default function ProjectDashboard() {
   const { address } = useAccount();
   const { myProjects, asClient, asFreelancer } = useMyProjects();
+  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   if (!address) {
     return (
@@ -160,15 +163,24 @@ export default function ProjectDashboard() {
               </div>
 
               <div className="flex gap-3">
-                <button className="btn-secondary flex-1 inline-flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setSelectedProject(project)}
+                  className="btn-secondary flex-1 inline-flex items-center justify-center gap-2"
+                >
                   <MessageCircle className="w-4 h-4" />
-                  Chat
+                  View Details
                 </button>
-                <button className="btn-ghost">View Details</button>
               </div>
             </div>
           );
         })
+      )}
+
+      {selectedProject && (
+        <ProjectDetailView
+          project={selectedProject}
+          onClose={() => setSelectedProject(null)}
+        />
       )}
     </div>
   );

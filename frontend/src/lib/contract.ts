@@ -34,6 +34,37 @@ export const VERA_ESCROW_ABI = [
     "type": "function"
   },
   {
+    "inputs": [{"internalType": "bytes32", "name": "milestoneId", "type": "bytes32"}],
+    "name": "releaseSilentConsent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "milestoneId", "type": "bytes32"}],
+    "name": "approveSubjective",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "bytes32", "name": "milestoneId", "type": "bytes32"},
+      {"internalType": "string", "name": "reason", "type": "string"}
+    ],
+    "name": "raiseDispute",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "projectId", "type": "bytes32"}],
+    "name": "getProjectMilestones",
+    "outputs": [{"internalType": "bytes32[]", "name": "", "type": "bytes32[]"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
     "name": "projects",
     "outputs": [
@@ -129,4 +160,12 @@ export const VERA_ESCROW_ABI = [
   }
 ] as const;
 
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`;
+// Contract address - will be set after deployment
+// For development, use the deployed Sepolia address
+// For production, use the mainnet address
+export const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+
+// Helper to check if contract is configured
+export const isContractConfigured = () => {
+  return CONTRACT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+};

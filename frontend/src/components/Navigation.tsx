@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, LogIn } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAuth } from '../contexts/AuthContext';
-import LoginModal from './LoginModal';
 import UserMenu from './UserMenu';
 
 export default function Navigation() {
   const { isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <>
@@ -32,31 +35,28 @@ export default function Navigation() {
               >
                 Marketplace
               </Link>
-              <Link
-                to="/dashboard"
-                className="text-slate-300 hover:text-white transition-colors font-medium"
-              >
-                Dashboard
-              </Link>
               
               {/* Auth Section */}
               <div className="flex items-center gap-3">
                 {isAuthenticated ? (
                   <>
+                    <Link
+                      to="/dashboard"
+                      className="text-slate-300 hover:text-white transition-colors font-medium"
+                    >
+                      Dashboard
+                    </Link>
                     <ConnectButton chainStatus="icon" showBalance={false} />
                     <UserMenu />
                   </>
                 ) : (
-                  <>
-                    <ConnectButton chainStatus="icon" showBalance={false} />
-                    <button
-                      onClick={() => setShowLoginModal(true)}
-                      className="btn-primary flex items-center gap-2"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      Sign In
-                    </button>
-                  </>
+                  <button
+                    onClick={handleGetStarted}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Get Started
+                  </button>
                 )}
               </div>
             </div>
@@ -82,28 +82,33 @@ export default function Navigation() {
               >
                 Marketplace
               </Link>
-              <Link
-                to="/dashboard"
-                className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
+              
+              {isAuthenticated && (
+                <Link
+                  to="/dashboard"
+                  className="block px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
               
               <div className="pt-3 border-t border-slate-800 space-y-3">
-                <ConnectButton chainStatus="icon" showBalance={false} />
                 {isAuthenticated ? (
-                  <UserMenu />
+                  <>
+                    <ConnectButton chainStatus="icon" showBalance={false} />
+                    <UserMenu />
+                  </>
                 ) : (
                   <button
                     onClick={() => {
-                      setShowLoginModal(true);
+                      handleGetStarted();
                       setIsMenuOpen(false);
                     }}
                     className="w-full btn-primary flex items-center justify-center gap-2"
                   >
                     <LogIn className="w-4 h-4" />
-                    Sign In
+                    Get Started
                   </button>
                 )}
               </div>
@@ -111,9 +116,6 @@ export default function Navigation() {
           </div>
         )}
       </nav>
-
-      {/* Login Modal */}
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );
 }

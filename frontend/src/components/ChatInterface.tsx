@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, X, Loader2 } from 'lucide-react';
-import { useAccount } from 'wagmi';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Message {
   id: string;
   sender: string;
+  senderType: 'client' | 'freelancer';
   content: string;
   timestamp: number;
   read: boolean;
@@ -12,259 +13,176 @@ interface Message {
 
 interface ChatInterfaceProps {
   projectId: string;
-  recipientAddress: string;
-  recipientName?: string;
-  onClose?: () => void;
+  projectTitle: string;
+  otherParty: string;
+  onClose: () => void;
 }
 
-export default function ChatInterface({ 
-  projectId, 
-  recipientAddress, 
-  recipientName,
-  onClose 
-}: ChatInterfaceProps) {
-  const { address } = useAccount();
+export default function ChatInterface({ projectId, projectTitle, otherParty, onClose }: ChatInterfaceProps) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Auto-scroll to bottom
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // WebSocket connection
-  useEffect(() => {
-    if (!address) return;
-
-    const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
-    const ws = new WebSocket(wsUrl);
+    // Connect to WebSocket server
+    const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3001');
+    wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('WebSocket connected');
-      setIsConnected(true);
-      
       // Subscribe to project chat
       ws.send(JSON.stringify({
         type: 'subscribe',
         projectId,
-        address
+        userId: user?.uid
       }));
     };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
-      if (data.type === 'message') {
-        const message: Message = {
-          id: data.messageId || Date.now().toString(),
-          sender: data.sender,
-          content: data.content,
-          timestamp: data.timestamp,
-          read: false
-        };
-        setMessages(prev => [...prev, message]);
-      } else if (data.type === 'typing') {
-        setIsTyping(data.isTyping && data.sender !== address);
+      if (data.type === 'message' && data.projectId === projectId) {
+        setMessages(prev => [...prev, data.message]);
       } else if (data.type === 'history') {
-        setMessages(data.messages || []);
+        setMessages(data.messages);
       }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      setIsConnected(false);
     };
 
     ws.onclose = () => {
       console.log('WebSocket disconnected');
-      setIsConnected(false);
     };
-
-    wsRef.current = ws;
 
     return () => {
       ws.close();
     };
-  }, [projectId, address]);
+  }, [projectId, user?.uid]);
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !wsRef.current || !isConnected) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    const messageData = {
-      type: 'message',
-      projectId,
-      sender: address,
-      recipient: recipientAddress,
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !wsRef.current) return;
+
+    setIsSending(true);
+    const message: Message = {
+      id: `${Date.now()}-${Math.random()}`,
+      sender: user?.email || '',
+      senderType: user?.role as 'client' | 'freelancer',
       content: newMessage,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      read: false,
     };
 
-    wsRef.current.send(JSON.stringify(messageData));
-    setNewMessage('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const handleTyping = () => {
-    if (!wsRef.current || !isConnected) return;
-
     wsRef.current.send(JSON.stringify({
-      type: 'typing',
+      type: 'message',
       projectId,
-      sender: address,
-      isTyping: true
+      message
     }));
 
-    // Stop typing indicator after 2 seconds
-    setTimeout(() => {
-      if (wsRef.current) {
-        wsRef.current.send(JSON.stringify({
-          type: 'typing',
-          projectId,
-          sender: address,
-          isTyping: false
-        }));
-      }
-    }, 2000);
+    setNewMessage('');
+    setIsSending(false);
   };
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
-    <div className="card flex flex-col h-[600px]">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-            {recipientName ? recipientName[0].toUpperCase() : '?'}
-          </div>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="card max-w-4xl w-full h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <div>
-            <h3 className="font-semibold text-white">
-              {recipientName || formatAddress(recipientAddress)}
-            </h3>
-            <div className="flex items-center gap-2 text-sm">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-slate-400">
-                {isConnected ? 'Connected' : 'Disconnected'}
-              </span>
-            </div>
+            <h2 className="text-xl font-bold text-white">{projectTitle}</h2>
+            <p className="text-sm text-slate-400 mt-1">Chat with {otherParty}</p>
           </div>
-        </div>
-        {onClose && (
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>
-        )}
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-              <Send className="w-8 h-8 text-slate-600" />
-            </div>
-            <p className="text-slate-400 mb-2">No messages yet</p>
-            <p className="text-sm text-slate-500">Start the conversation!</p>
-          </div>
-        ) : (
-          messages.map((message) => {
-            const isOwnMessage = message.sender.toLowerCase() === address?.toLowerCase();
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                    isOwnMessage
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-slate-800 text-slate-200'
-                  }`}
-                >
-                  <p className="break-words">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    isOwnMessage ? 'text-blue-100' : 'text-slate-500'
-                  }`}>
-                    {formatTime(message.timestamp)}
-                  </p>
-                </div>
-              </div>
-            );
-          })
-        )}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="bg-slate-800 rounded-2xl px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-              handleTyping();
-            }}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            className="input-field flex-1"
-            disabled={!isConnected}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!newMessage.trim() || !isConnected}
-            className="btn-primary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {!isConnected ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </button>
         </div>
-        {!isConnected && (
-          <p className="text-xs text-red-400 mt-2">
-            Connecting to chat server...
-          </p>
-        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {messages.length === 0 ? (
+            <div className="text-center text-slate-500 py-12">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isOwn = msg.sender === user?.email;
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                      isOwn
+                        ? 'bg-gradient-to-r from-vera-600 to-vera-500 text-white'
+                        : 'bg-slate-800 text-slate-100'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                    <p
+                      className={`text-xs mt-1 ${
+                        isOwn ? 'text-vera-100' : 'text-slate-500'
+                      }`}
+                    >
+                      {formatTime(msg.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSend} className="p-6 border-t border-slate-800">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 input-field"
+              placeholder="Type your message..."
+              disabled={isSending}
+            />
+            <button
+              type="submit"
+              className="btn-primary px-6 flex items-center gap-2"
+              disabled={isSending || !newMessage.trim()}
+            >
+              {isSending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  Send
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

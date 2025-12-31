@@ -1,12 +1,9 @@
 import Navigation from '../components/Navigation';
-import { ArrowRight, Shield, Zap, Users, CheckCircle, Code, Coins, Code2, Wallet } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Users, CheckCircle, Code, Coins, Code2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useProjects } from '../hooks/useProjects';
 
 export default function HomePage() {
-  const { isConnected } = useAccount();
   const { projects } = useProjects();
 
   const activeProjects = projects.filter(p => p.status === 0).length;
@@ -44,23 +41,14 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              {isConnected ? (
-                <>
-                  <Link to="/marketplace" className="btn-primary inline-flex items-center gap-2 group">
-                    <span>Browse Projects</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link to="/dashboard" className="btn-secondary inline-flex items-center gap-2">
-                    <Code className="w-5 h-5" />
-                    <span>Create Project</span>
-                  </Link>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <ConnectButton />
-                  <p className="text-slate-500 text-sm">Connect your wallet to get started</p>
-                </div>
-              )}
+              <Link to="/marketplace" className="btn-primary inline-flex items-center gap-2 group">
+                <span>Browse Projects</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link to="/dashboard" className="btn-secondary inline-flex items-center gap-2">
+                <Code className="w-5 h-5" />
+                <span>Get Started</span>
+              </Link>
             </div>
           </div>
 
