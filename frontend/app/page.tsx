@@ -1,12 +1,37 @@
 'use client';
 
+import { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { ProjectDashboard } from '@/components/ProjectDashboard';
 import GitHubConnect from '@/components/GitHubConnect';
-import { Mic, Shield, Zap, Globe, ArrowRight, CheckCircle, Clock, Users, Code, FileText, TrendingUp, Lock, Award, Sparkles } from 'lucide-react';
+import { SimpleProjectCreator } from '@/components/SimpleProjectCreator';
+import { ChatInterface } from '@/components/ChatInterface';
+import { MarketplaceBrowser, MarketplaceProject } from '@/components/MarketplaceBrowser';
+import { Mic, Shield, Zap, Globe, ArrowRight, CheckCircle, Clock, Users, Code, FileText, TrendingUp, Lock, Award, Sparkles, MessageCircle } from 'lucide-react';
+import type { Agreement } from '@/lib/ipfs';
 
 export default function HomePage() {
+  const [selectedProject, setSelectedProject] = useState<MarketplaceProject | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatProjectId, setChatProjectId] = useState<string>('');
+  const [chatParticipant, setChatParticipant] = useState<string>('');
+
+  const handleProjectCreated = (agreement: Agreement, ipfsHash: string) => {
+    console.log('Project created:', { agreement, ipfsHash });
+    // TODO: Add to marketplace
+  };
+
+  const handleProjectSelect = (project: MarketplaceProject) => {
+    setSelectedProject(project);
+    // TODO: Show project details modal
+  };
+
+  const handleStartChat = (projectId: string, participantAddress: string) => {
+    setChatProjectId(projectId);
+    setChatParticipant(participantAddress);
+    setChatOpen(true);
+  };
   return (
     <div className="space-y-32">
       {/* Hero Section - Enhanced */}
@@ -233,135 +258,190 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-          <h3 className="text-xl font-bold mb-4 text-slate-900">Pure Web3</h3>
-          <p className="text-slate-600 leading-relaxed">
-            Fully decentralized architecture. Agreements stored on IPFS, logic on Ethereum. 
-            No traditional databases, no single points of failure.
-          </p>
-          <div className="mt-6 flex items-center justify-center space-x-2 text-sm text-vera-success font-medium">
-            <span>Censorship resistant</span>
-            <Shield className="w-4 h-4" />
+
+      {/* Voice Recorder Section - Premium Design */}
+      <section id="create" className="relative overflow-hidden scroll-mt-24">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-50"></div>
+        <div className="relative max-w-5xl mx-auto">
+          <div className="group relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition duration-1000"></div>
+            <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-12 border border-white/40 shadow-2xl">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold mb-6 shadow-lg">
+                  <Code className="w-4 h-4" />
+                  <span>Create Your Project</span>
+                </div>
+                <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Post a Project to the Marketplace
+                </h2>
+                <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                  Create a project listing that freelancers can browse and bid on. Once you select a freelancer, 
+                  a smart contract escrow is automatically created with AI verification.
+                </p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200/60 shadow-inner">
+                <SimpleProjectCreator onProjectCreated={handleProjectCreated} />
+              </div>
+
+              <div className="mt-10 grid md:grid-cols-3 gap-6">
+                <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl border border-indigo-200/40">
+                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <MessageCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Chat with Freelancers</h4>
+                  <p className="text-sm text-slate-600">Discuss project details in real-time</p>
+                </div>
+                <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl border border-purple-200/40">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Review Proposals</h4>
+                  <p className="text-sm text-slate-600">Select the best freelancer</p>
+                </div>
+                <div className="text-center p-6 bg-gradient-to-br from-pink-50 to-pink-100/50 rounded-2xl border border-pink-200/40">
+                  <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <Shield className="w-7 h-7 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 mb-2">Smart Contract</h4>
+                  <p className="text-sm text-slate-600">Automatic escrow creation</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Voice Recorder Section */}
-      <section className="card-gradient p-12 glow-effect">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-6 gradient-text">Create Project with Voice</h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            Describe your project naturally. Our AI will convert it to a structured agreement, 
-            pin it to IPFS, and create an immutable escrow contract.
-          </p>
-        </div>
-        <VoiceRecorder />
+      {/* Marketplace Section */}
+      <section id="marketplace" className="scroll-mt-24">
+        <MarketplaceBrowser 
+          onProjectSelect={handleProjectSelect}
+          onStartChat={handleStartChat}
+        />
       </section>
 
-      {/* How It Works */}
-      <section className="card-gradient p-12">
-        <h2 className="text-4xl font-bold text-center mb-16 gradient-text">How Vera Protocol Works</h2>
-        <div className="grid md:grid-cols-4 gap-8">
-          <div className="text-center group">
-            <div className="relative mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-2xl flex items-center justify-center text-white font-bold text-xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
-                1
-              </div>
-              <div className="absolute -inset-2 bg-gradient-to-br from-vera-primary/20 to-vera-secondary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
-            <h3 className="font-bold text-lg mb-3 text-slate-900">Voice Agreement</h3>
-            <p className="text-slate-600 leading-relaxed">Describe your project with voice. AI creates structured agreement and pins to IPFS.</p>
-          </div>
-          
-          <div className="text-center group">
-            <div className="relative mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-vera-secondary to-vera-accent rounded-2xl flex items-center justify-center text-white font-bold text-xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
-                2
-              </div>
-              <div className="absolute -inset-2 bg-gradient-to-br from-vera-secondary/20 to-vera-accent/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
-            <h3 className="font-bold text-lg mb-3 text-slate-900">Escrow Funds</h3>
-            <p className="text-slate-600 leading-relaxed">Client deposits payment. Funds locked in smart contract with 80/20 split logic.</p>
-          </div>
-          
-          <div className="text-center group">
-            <div className="relative mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-vera-accent to-vera-success rounded-2xl flex items-center justify-center text-white font-bold text-xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
-                3
-              </div>
-              <div className="absolute -inset-2 bg-gradient-to-br from-vera-accent/20 to-vera-success/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
-            <h3 className="font-bold text-lg mb-3 text-slate-900">AI Verification</h3>
-            <p className="text-slate-600 leading-relaxed">Freelancer submits work. AI audits code quality, security, and requirements compliance.</p>
-          </div>
-          
-          <div className="text-center group">
-            <div className="relative mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-vera-success to-vera-primary rounded-2xl flex items-center justify-center text-white font-bold text-xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
-                4
-              </div>
-              <div className="absolute -inset-2 bg-gradient-to-br from-vera-success/20 to-vera-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
-            <h3 className="font-bold text-lg mb-3 text-slate-900">Auto-Release</h3>
-            <p className="text-slate-600 leading-relaxed">80% releases immediately. 20% after 72h silent consent or client approval.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Dashboard Section */}
-      <section>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-4xl font-bold gradient-text">Your Projects</h2>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-slate-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <Users className="w-4 h-4" />
-              <span>Live Dashboard</span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-slate-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <Clock className="w-4 h-4" />
-              <span>Real-time Updates</span>
-            </div>
-          </div>
-        </div>
-
-        {/* GitHub Connection Card */}
-        <div className="mb-8 animate-fade-in">
-          <GitHubConnect />
-        </div>
-
-        {/* Project Dashboard */}
-        <ProjectDashboard />
-      </section>
-
-      {/* Silent Consent Protocol */}
-      <section className="card-gradient p-12 border-l-4 border-vera-accent">
-        <div className="flex items-start space-x-6">
-          <div className="w-12 h-12 bg-vera-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Clock className="w-6 h-6 text-vera-accent" />
-          </div>
+      {/* Dashboard Section - Modern Layout */}
+      <section id="dashboard" className="relative scroll-mt-24">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
           <div>
-            <h3 className="text-2xl font-bold text-vera-accent mb-4">Silent Consent Protocol</h3>
-            <p className="text-slate-600 mb-6 leading-relaxed">
-              When a milestone is submitted and passes AI verification, clients have 72 hours to review. 
-              If no objection is raised, the remaining 20% is automatically released. This eliminates 
-              indefinite payment delays while protecting client interests.
-            </p>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white/50 rounded-xl p-4">
-                <div className="font-semibold text-slate-900 mb-2">AI Audit</div>
-                <div className="text-sm text-slate-600">24-hour technical assessment</div>
+            <h2 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent mb-3">
+              Your Projects
+            </h2>
+            <p className="text-slate-600 text-lg">Manage all your agreements in one place</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 px-5 py-3 rounded-xl border border-green-200 shadow-sm">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <Users className="w-4 h-4" />
+              <span className="font-semibold text-sm">Live Dashboard</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 px-5 py-3 rounded-xl border border-blue-200 shadow-sm">
+              <Clock className="w-4 h-4" />
+              <span className="font-semibold text-sm">Real-time Updates</span>
+            </div>
+          </div>
+        </div>
+
+        {/* GitHub Connection Card - Enhanced */}
+        <div className="mb-10 animate-fade-in">
+          <div className="group relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-600 via-purple-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <div className="relative">
+              <GitHubConnect />
+            </div>
+          </div>
+        </div>
+
+        {/* Project Dashboard - Elevated */}
+        <div className="relative">
+          <div className="absolute -inset-4 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 rounded-3xl blur-3xl opacity-30"></div>
+          <div className="relative">
+            <ProjectDashboard />
+          </div>
+        </div>
+      </section>
+
+      {/* Silent Consent Protocol - Premium Card */}
+      <section className="relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 opacity-40"></div>
+        <div className="relative">
+          <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition duration-700"></div>
+          <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-12 border-l-4 border-amber-500 shadow-2xl">
+            <div className="flex flex-col md:flex-row items-start gap-8">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <div className="absolute -inset-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl blur-lg opacity-50"></div>
+                  <div className="relative w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
+                    <Clock className="w-10 h-10 text-white" />
+                  </div>
+                </div>
               </div>
-              <div className="bg-white/50 rounded-xl p-4">
-                <div className="font-semibold text-slate-900 mb-2">Client Review</div>
-                <div className="text-sm text-slate-600">72-hour response window</div>
-              </div>
-              <div className="bg-white/50 rounded-xl p-4">
-                <div className="font-semibold text-slate-900 mb-2">Auto-Release</div>
-                <div className="text-sm text-slate-600">Automatic if no response</div>
+              <div className="flex-1">
+                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 px-4 py-2 rounded-full text-xs font-bold mb-4 border border-amber-200">
+                  <Zap className="w-3 h-3" />
+                  <span>BREAKTHROUGH FEATURE</span>
+                </div>
+                <h3 className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mb-4">
+                  Silent Consent Protocol
+                </h3>
+                <p className="text-lg text-slate-700 mb-8 leading-relaxed">
+                  When a milestone is submitted and passes AI verification, clients have 72 hours to review. 
+                  If no objection is raised, the remaining 20% is automatically released. This revolutionary approach 
+                  eliminates indefinite payment delays while fully protecting client interests.
+                </p>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="group/card relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl blur opacity-30 group-hover/card:opacity-50 transition"></div>
+                    <div className="relative bg-white rounded-xl p-6 border border-blue-100 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="font-bold text-slate-900 text-lg">AI Audit</div>
+                      </div>
+                      <div className="text-sm text-slate-600 leading-relaxed">Comprehensive 24-hour technical assessment with security analysis</div>
+                    </div>
+                  </div>
+                  <div className="group/card relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl blur opacity-30 group-hover/card:opacity-50 transition"></div>
+                    <div className="relative bg-white rounded-xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="font-bold text-slate-900 text-lg">Client Review</div>
+                      </div>
+                      <div className="text-sm text-slate-600 leading-relaxed">72-hour response window for thorough evaluation and feedback</div>
+                    </div>
+                  </div>
+                  <div className="group/card relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-green-400 to-green-600 rounded-xl blur opacity-30 group-hover/card:opacity-50 transition"></div>
+                    <div className="relative bg-white rounded-xl p-6 border border-green-100 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow">
+                          <Zap className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="font-bold text-slate-900 text-lg">Auto-Release</div>
+                      </div>
+                      <div className="text-sm text-slate-600 leading-relaxed">Instant automatic payment if no disputes are raised</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Chat Interface */}
+      {chatOpen && chatProjectId && (
+        <ChatInterface
+          projectId={chatProjectId}
+          otherPartyAddress={chatParticipant}
+          otherPartyType="client"
+          onClose={() => setChatOpen(false)}
+        />
+      )}
     </div>
   );
 }

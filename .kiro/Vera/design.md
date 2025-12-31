@@ -14,6 +14,8 @@ The platform implements an 80/20 payment split where 80% of funds are tied to ob
 sequenceDiagram
     participant Client
     participant VoiceUI as Voice Interface
+    participant Marketplace
+    participant Chat as Real-time Chat
     participant IPFS
     participant SmartContract as Escrow Contract
     participant WebSocket as WebSocket Server
@@ -23,9 +25,20 @@ sequenceDiagram
     participant Freelancer
 
     Client->>VoiceUI: Speak project requirements
-    VoiceUI->>IPFS: Store agreement metadata
-    IPFS-->>VoiceUI: Return content hash
-    VoiceUI->>SmartContract: Deploy escrow with IPFS hash
+    VoiceUI->>IPFS: Store project listing
+    IPFS-->>Marketplace: Return content hash
+    Marketplace->>Marketplace: Post project (open for proposals)
+    
+    Freelancer->>Marketplace: Browse projects
+    Freelancer->>Chat: Initiate chat with client
+    Chat->>WebSocket: Real-time messaging
+    WebSocket->>Client: Deliver messages
+    Freelancer->>Marketplace: Submit proposal
+    
+    Client->>Marketplace: Review proposals
+    Client->>Chat: Discuss with freelancers
+    Client->>Marketplace: Select freelancer
+    Marketplace->>SmartContract: Deploy escrow contract
     Client->>SmartContract: Deposit funds (80% objective, 20% subjective)
     
     Freelancer->>GitHub: Submit code deliverable
@@ -55,24 +68,47 @@ sequenceDiagram
 
 ### Component Architecture
 
-The system consists of five main layers:
+The system consists of six main layers:
 
-1. **Presentation Layer**: Next.js frontend with voice interface and WebSocket client
-2. **Real-Time Layer**: WebSocket server for instant status updates and notifications
-3. **AI Verification Layer**: Production AI agents using OpenAI/Anthropic LLM APIs
-4. **Blockchain Layer**: Ethereum smart contracts for escrow management
-5. **Storage Layer**: IPFS for decentralized metadata storage
+1. **Presentation Layer**: Next.js frontend with voice interface, marketplace browsing, and chat UI
+2. **Real-Time Layer**: WebSocket server for instant chat messages, status updates, and notifications
+3. **Marketplace Layer**: Project listings, proposals, and freelancer discovery
+4. **AI Verification Layer**: Production AI agents using OpenAI/Anthropic LLM APIs
+5. **Blockchain Layer**: Ethereum smart contracts for escrow management
+6. **Storage Layer**: IPFS for decentralized metadata storage
 
 ## Components and Interfaces
 
+### Marketplace Component
+- **Purpose**: Decentralized project listing and freelancer discovery platform
+- **Technology**: IPFS for project storage + WebSocket for real-time updates
+- **Key Features**:
+  - Project listing creation from voice/text
+  - Browse/search/filter projects
+  - Freelancer proposal submission
+  - Client proposal review and selection
+  - Real-time chat integration
+- **Interface**: React components with IPFS content addressing
+
+### Chat System Component
+- **Purpose**: Real-time communication between clients and freelancers
+- **Technology**: WebSocket server + IPFS message archival
+- **Key Features**:
+  - 1-on-1 messaging per project
+  - Real-time message delivery
+  - Message persistence to IPFS
+  - Read receipts and typing indicators
+  - Offline message queuing
+- **Interface**: WebSocket protocol with fallback to HTTP long-polling
+
 ### Voice Interface Component
-- **Purpose**: Convert natural language to structured project agreements
-- **Technology**: Web Speech API + NLP processing
+- **Purpose**: Convert natural language to structured project listings
+- **Technology**: Web Speech API + AI NLP processing
 - **Interface**: RESTful API for speech-to-text conversion
-- **Output**: Structured JSON agreement format
+- **Output**: Marketplace project listing JSON format
 
 ### IPFS Storage Component
-- **Purpose**: Decentralized storage of project metadata and agreements
+- **Purpose**: Decentralized storage of project metadata, proposals, and chat history
 - **Technology**: IPFS HTTP API with content addressing
 - **Interface**: Content hash-based retrieval system
 - **Data Format**: JSON metadata with cryptographic integrity
@@ -107,7 +143,75 @@ The system consists of five main layers:
 
 ## Data Models
 
-### Project Agreement Model
+### Project Listing Model (Marketplace)
+```typescript
+interface ProjectListing {
+  id: string;
+  status: 'open' | 'in_progress' | 'in_review' | 'completed' | 'disputed';
+  clientAddress: string;
+  title: string;
+  description: string;
+  budget: {
+    total: string; // in ETH
+    technical: string; // 80%
+    subjective: string; // 20%
+  };
+  requirements: {
+    technical: TechnicalRequirement[];
+    subjective: SubjectiveRequirement[];
+  };
+  timeline: {
+    estimated: number; // days
+    deadline?: number; // timestamp
+  };
+  skills: string[];
+  ipfsHash?: string;
+  createdAt: number;
+  proposals: Proposal[];
+  selectedFreelancer?: string;
+}
+```
+
+### Proposal Model
+```typescript
+interface Proposal {
+  id: string;
+  freelancerAddress: string;
+  freelancerName?: string;
+  coverLetter: string;
+  proposedTimeline: number; // days
+  githubProfile?: string;
+  portfolio?: string[];
+  status: 'pending' | 'accepted' | 'rejected';
+  submittedAt: number;
+}
+```
+
+### Chat Message Model
+```typescript
+interface ChatMessage {
+  id: string;
+  projectId: string;
+  sender: string;
+  senderType: 'client' | 'freelancer';
+  content: string;
+  timestamp: number;
+  read: boolean;
+}
+
+interface ProjectChat {
+  projectId: string;
+  participants: {
+    client: string;
+    freelancer: string;
+  };
+  messages: ChatMessage[];
+  lastActivity: number;
+  ipfsHash?: string; // For message history archival
+}
+```
+
+### Project Agreement Model (Post-Selection)
 ```typescript
 interface ProjectAgreement {
   id: string;
@@ -121,6 +225,7 @@ interface ProjectAgreement {
   timeline: number;
   ipfsHash: string;
   createdAt: number;
+  contractAddress?: string; // Deployed escrow contract
 }
 ```
 

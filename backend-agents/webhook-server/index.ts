@@ -422,7 +422,7 @@ app.post('/webhooks/github/milestone-verification', async (req, res) => {
     broadcastMilestoneUpdate(
       projectInfo.projectId,
       projectInfo.milestoneId,
-      verificationResult.verification?.signedPayload ? 'approved' : 'pending',
+      verificationResult.verification?.signature ? 'approved' : 'pending',
       verificationResult
     );
 
@@ -609,7 +609,7 @@ app.post('/api/milestone/verify', async (req, res) => {
     broadcastMilestoneUpdate(
       projectId,
       milestoneId,
-      verificationResult.verification?.signedPayload ? 'approved' : 'failed',
+      verificationResult.verification?.signature ? 'approved' : 'failed',
       verificationResult
     );
 
@@ -695,8 +695,43 @@ async function performMilestoneVerification(params: {
 
     // 6. Apply neutral arbitration logic with 80/20 split
     console.log('⚖️ Applying neutral arbitration with 80/20 technical/subjective split...');
+    
+    // Create mock repository analysis for arbitration
+    const mockRepositoryAnalysis = {
+      owner: 'freelancer',
+      repo: repositoryUrl.split('/').pop() || 'unknown',
+      branch: 'main',
+      lastCommit: {
+        sha: 'abc123',
+        message: 'Complete milestone',
+        author: 'freelancer',
+        date: new Date().toISOString()
+      },
+      codeQuality: {
+        files: 10,
+        linesOfCode: 500,
+        complexity: 2.5,
+        languages: { TypeScript: 80, JavaScript: 20 }
+      },
+      tests: {
+        hasTests: true,
+        testFiles: ['test1.ts', 'test2.ts'],
+        coverage: 85
+      },
+      documentation: {
+        hasReadme: true,
+        hasApiDocs: true,
+        hasDeploymentGuide: false
+      },
+      security: {
+        vulnerabilities: [],
+        dependencies: [],
+        secrets: []
+      }
+    };
+    
     const arbitrationResult = arbitrationAgent.applyNeutralArbitration(
-      evaluation,
+      mockRepositoryAnalysis,
       agreement.requirements?.technical || [],
       agreement.requirements?.subjective || []
     );

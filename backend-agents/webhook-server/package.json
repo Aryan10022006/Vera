@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.ts",
+    "dev": "tsx watch index.ts",
     "build": "tsc index.ts --outDir dist --target es2020 --module esnext --moduleResolution node",
     "docker:build": "docker build -t vera-webhook-server .",
     "docker:run": "docker run -p 3001:3001 vera-webhook-server"
@@ -23,7 +23,8 @@
     "@types/express": "^4.17.21",
     "@types/node": "^20.9.0",
     "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.2.2"
   },
   "keywords": [

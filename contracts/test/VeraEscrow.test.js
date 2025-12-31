@@ -22,6 +22,78 @@ describe("VeraEscrow", function () {
     return { escrow, verifier, owner, client, freelancer, agent, other };
   }
 
+  // ============ HELPER FIXTURES ============
+
+  async function createProjectFixture() {
+    const fixture = await loadFixture(deployVeraEscrowFixture);
+    const { escrow, client, freelancer } = fixture;
+    
+    const projectId = ethers.keccak256(ethers.toUtf8Bytes("test-project-1"));
+    const ipfsHash = ethers.keccak256(ethers.toUtf8Bytes("QmTest123"));
+    const amount = ethers.parseEther("1.0");
+
+    await escrow.connect(client).createProject(projectId, freelancer.address, ipfsHash, { value: amount });
+    
+    return { ...fixture, projectId, ipfsHash, projectAmount: amount };
+  }
+
+  async function createSubmittedMilestoneFixture() {
+    const fixture = await createProjectFixture();
+    const { escrow, client, freelancer, projectId } = fixture;
+    
+    const milestoneId = ethers.keccak256(ethers.toUtf8Bytes("milestone-1"));
+    const milestoneAmount = ethers.parseEther("0.5");
+
+    await escrow.connect(client).createMilestone(projectId, milestoneId, milestoneAmount);
+    await escrow.connect(freelancer).submitMilestone(milestoneId);
+    
+    return { ...fixture, milestoneId, milestoneAmount };
+  }
+
+  async function createTechnicalReleasedMilestoneFixture() {
+    const fixture = await createSubmittedMilestoneFixture();
+    const { escrow, agent, freelancer, projectId, milestoneId, milestoneAmount } = fixture;
+
+    const technicalAmount = (milestoneAmount * 80n) / 100n;
+    const subjectiveAmount = milestoneAmount - technicalAmount;
+
+    const verificationData = {
+      projectId: projectId,
+      milestoneId: milestoneId,
+      freelancer: freelancer.address,
+      technicalAmount: technicalAmount,
+      subjectiveAmount: subjectiveAmount,
+      timestamp: await time.latest(),
+      ipfsHash: ethers.keccak256(ethers.toUtf8Bytes("QmTest123")),
+      approved: true
+    };
+
+    const domain = {
+      name: "VeraProtocol",
+      version: "1.0.0",
+      chainId: await ethers.provider.getNetwork().then(n => n.chainId),
+      verifyingContract: await escrow.getAddress()
+    };
+
+    const types = {
+      VerificationData: [
+        { name: "projectId", type: "bytes32" },
+        { name: "milestoneId", type: "bytes32" },
+        { name: "freelancer", type: "address" },
+        { name: "technicalAmount", type: "uint256" },
+        { name: "subjectiveAmount", type: "uint256" },
+        { name: "timestamp", type: "uint256" },
+        { name: "ipfsHash", type: "bytes32" },
+        { name: "approved", type: "bool" }
+      ]
+    };
+
+    const signature = await agent.signTypedData(domain, types, verificationData);
+    await escrow.verifyAndRelease(verificationData, signature);
+
+    return { ...fixture, technicalAmount, subjectiveAmount };
+  }
+
   // ============ DEPLOYMENT TESTS ============
 
   describe("Deployment", function () {
@@ -96,19 +168,6 @@ describe("VeraEscrow", function () {
   // ============ MILESTONE TESTS ============
 
   describe("Milestone Management", function () {
-    async function createProjectFixture() {
-      const fixture = await loadFixture(deployVeraEscrowFixture);
-      const { escrow, client, freelancer } = fixture;
-      
-      const projectId = ethers.keccak256(ethers.toUtf8Bytes("test-project-1"));
-      const ipfsHash = ethers.keccak256(ethers.toUtf8Bytes("QmTest123"));
-      const amount = ethers.parseEther("1.0");
-
-      await escrow.connect(client).createProject(projectId, freelancer.address, ipfsHash, { value: amount });
-      
-      return { ...fixture, projectId, ipfsHash, projectAmount: amount };
-    }
-
     it("Should create milestone with correct 80/20 split", async function () {
       const { escrow, client, projectId } = await loadFixture(createProjectFixture);
       
@@ -147,19 +206,6 @@ describe("VeraEscrow", function () {
   // ============ EIP-712 SIGNATURE TESTS ============
 
   describe("EIP-712 Signature Verification", function () {
-    async function createSubmittedMilestoneFixture() {
-      const fixture = await loadFixture(createProjectFixture);
-      const { escrow, client, freelancer, projectId } = fixture;
-      
-      const milestoneId = ethers.keccak256(ethers.toUtf8Bytes("milestone-1"));
-      const milestoneAmount = ethers.parseEther("0.5");
-
-      await escrow.connect(client).createMilestone(projectId, milestoneId, milestoneAmount);
-      await escrow.connect(freelancer).submitMilestone(milestoneId);
-      
-      return { ...fixture, milestoneId, milestoneAmount };
-    }
-
     it("Should verify and release funds with valid AI signature", async function () {
       const { escrow, agent, freelancer, projectId, milestoneId, milestoneAmount } = 
         await loadFixture(createSubmittedMilestoneFixture);
@@ -267,50 +313,6 @@ describe("VeraEscrow", function () {
   // ============ SILENT CONSENT TESTS ============
 
   describe("Silent Consent Protocol", function () {
-    async function createTechnicalReleasedMilestoneFixture() {
-      const fixture = await loadFixture(createSubmittedMilestoneFixture);
-      const { escrow, agent, freelancer, projectId, milestoneId, milestoneAmount } = fixture;
-
-      const technicalAmount = (milestoneAmount * 80n) / 100n;
-      const subjectiveAmount = milestoneAmount - technicalAmount;
-
-      const verificationData = {
-        projectId: projectId,
-        milestoneId: milestoneId,
-        freelancer: freelancer.address,
-        technicalAmount: technicalAmount,
-        subjectiveAmount: subjectiveAmount,
-        timestamp: await time.latest(),
-        ipfsHash: ethers.keccak256(ethers.toUtf8Bytes("QmTest123")),
-        approved: true
-      };
-
-      const domain = {
-        name: "VeraProtocol",
-        version: "1.0.0",
-        chainId: await ethers.provider.getNetwork().then(n => n.chainId),
-        verifyingContract: await escrow.getAddress()
-      };
-
-      const types = {
-        VerificationData: [
-          { name: "projectId", type: "bytes32" },
-          { name: "milestoneId", type: "bytes32" },
-          { name: "freelancer", type: "address" },
-          { name: "technicalAmount", type: "uint256" },
-          { name: "subjectiveAmount", type: "uint256" },
-          { name: "timestamp", type: "uint256" },
-          { name: "ipfsHash", type: "bytes32" },
-          { name: "approved", type: "bool" }
-        ]
-      };
-
-      const signature = await agent.signTypedData(domain, types, verificationData);
-      await escrow.verifyAndRelease(verificationData, signature);
-
-      return { ...fixture, technicalAmount, subjectiveAmount };
-    }
-
     it("Should release subjective funds after 72 hours", async function () {
       const { escrow, freelancer, milestoneId, subjectiveAmount } = 
         await loadFixture(createTechnicalReleasedMilestoneFixture);
@@ -506,76 +508,3 @@ describe("VeraEscrow", function () {
     });
   });
 });
-
-// Helper function to create project fixture (reusable)
-async function createProjectFixture() {
-  const fixture = await loadFixture(deployVeraEscrowFixture);
-  const { escrow, client, freelancer } = fixture;
-  
-  const projectId = ethers.keccak256(ethers.toUtf8Bytes("test-project-1"));
-  const ipfsHash = ethers.keccak256(ethers.toUtf8Bytes("QmTest123"));
-  const amount = ethers.parseEther("1.0");
-
-  await escrow.connect(client).createProject(projectId, freelancer.address, ipfsHash, { value: amount });
-  
-  return { ...fixture, projectId, ipfsHash, projectAmount: amount };
-}
-
-// Helper function to create submitted milestone fixture
-async function createSubmittedMilestoneFixture() {
-  const fixture = await createProjectFixture();
-  const { escrow, client, freelancer, projectId } = fixture;
-  
-  const milestoneId = ethers.keccak256(ethers.toUtf8Bytes("milestone-1"));
-  const milestoneAmount = ethers.parseEther("0.5");
-
-  await escrow.connect(client).createMilestone(projectId, milestoneId, milestoneAmount);
-  await escrow.connect(freelancer).submitMilestone(milestoneId);
-  
-  return { ...fixture, milestoneId, milestoneAmount };
-}
-
-// Helper function to create technical released milestone fixture
-async function createTechnicalReleasedMilestoneFixture() {
-  const fixture = await createSubmittedMilestoneFixture();
-  const { escrow, agent, freelancer, projectId, milestoneId, milestoneAmount } = fixture;
-
-  const technicalAmount = (milestoneAmount * 80n) / 100n;
-  const subjectiveAmount = milestoneAmount - technicalAmount;
-
-  const verificationData = {
-    projectId: projectId,
-    milestoneId: milestoneId,
-    freelancer: freelancer.address,
-    technicalAmount: technicalAmount,
-    subjectiveAmount: subjectiveAmount,
-    timestamp: await time.latest(),
-    ipfsHash: ethers.keccak256(ethers.toUtf8Bytes("QmTest123")),
-    approved: true
-  };
-
-  const domain = {
-    name: "VeraProtocol",
-    version: "1.0.0",
-    chainId: await ethers.provider.getNetwork().then(n => n.chainId),
-    verifyingContract: await escrow.getAddress()
-  };
-
-  const types = {
-    VerificationData: [
-      { name: "projectId", type: "bytes32" },
-      { name: "milestoneId", type: "bytes32" },
-      { name: "freelancer", type: "address" },
-      { name: "technicalAmount", type: "uint256" },
-      { name: "subjectiveAmount", type: "uint256" },
-      { name: "timestamp", type: "uint256" },
-      { name: "ipfsHash", type: "bytes32" },
-      { name: "approved", type: "bool" }
-    ]
-  };
-
-  const signature = await agent.signTypedData(domain, types, verificationData);
-  await escrow.verifyAndRelease(verificationData, signature);
-
-  return { ...fixture, technicalAmount, subjectiveAmount };
-}

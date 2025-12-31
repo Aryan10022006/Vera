@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Providers } from './providers';
+import { Navigation } from '@/components/Navigation';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -50,48 +51,7 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen">
             {/* Navigation */}
-            <nav className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl shadow-sm">
-              <div className="container mx-auto px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="relative group">
-                      <div className="w-10 h-10 bg-gradient-to-br from-vera-primary to-vera-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                        <span className="text-white font-bold text-lg">V</span>
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-vera-accent rounded-full animate-pulse shadow-lg"></div>
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold gradient-text">
-                        Vera Protocol
-                      </h1>
-                      <p className="text-xs text-slate-500 font-medium">AI-Mediated Escrow</p>
-                    </div>
-                  </div>
-                  
-                  <nav className="hidden md:flex items-center space-x-1">
-                    <a href="/" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
-                      Dashboard
-                    </a>
-                    <a href="/create" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
-                      Create Project
-                    </a>
-                    <a href="/milestones" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
-                      Milestones
-                    </a>
-                    <a href="/disputes" className="px-4 py-2 text-slate-600 hover:text-vera-primary hover:bg-white/50 rounded-lg transition-all duration-200 font-medium">
-                      Disputes
-                    </a>
-                  </nav>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="hidden sm:flex items-center space-x-2 text-xs font-semibold text-slate-600 bg-white/80 border border-white/40 px-4 py-2 rounded-full shadow-sm">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-sm"></div>
-                      <span>Sepolia</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </nav>
+            <Navigation />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-12">

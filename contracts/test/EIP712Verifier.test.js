@@ -112,7 +112,9 @@ describe("EIP712Verifier", function () {
 
       const signature = await agent1.signTypedData(domain, types, payoutData);
 
-      const [signer, isValid] = await verifier.verifyPayoutSignature(payoutData, signature);
+      const result = await verifier.verifyPayoutSignature(payoutData, signature);
+      const signer = result.signer || result[0];
+      const isValid = result.isValid || result[1];
 
       expect(signer).to.equal(agent1.address);
       expect(isValid).to.be.true;
@@ -146,7 +148,9 @@ describe("EIP712Verifier", function () {
 
       const signature = await agent2.signTypedData(domain, types, payoutData);
 
-      const [signer, isValid] = await verifier.verifyPayoutSignature(payoutData, signature);
+      const result = await verifier.verifyPayoutSignature(payoutData, signature);
+      const signer = result.signer || result[0];
+      const isValid = result.isValid || result[1];
 
       expect(signer).to.equal(agent2.address);
       expect(isValid).to.be.false;
@@ -238,7 +242,9 @@ describe("EIP712Verifier", function () {
 
       const signature = await agent1.signTypedData(domain, types, verificationData);
 
-      const [signer, isValid] = await verifier.verifyVerificationSignature(verificationData, signature);
+      const result = await verifier.verifyVerificationSignature(verificationData, signature);
+      const signer = result.signer || result[0];
+      const isValid = result.isValid || result[1];
 
       expect(signer).to.equal(agent1.address);
       expect(isValid).to.be.true;
@@ -372,13 +378,17 @@ describe("EIP712Verifier", function () {
         const signature = await agent1.signTypedData(domain, types, scenario.data);
 
         // Verify signature is valid
-        const [signer, isValid] = await verifier.verifyPayoutSignaturePure(scenario.data, signature);
+        const result1 = await verifier.verifyPayoutSignaturePure(scenario.data, signature);
+        const signer = result1.signer || result1[0];
+        const isValid = result1.isValid || result1[1];
         
         expect(signer).to.equal(agent1.address, `Failed for scenario: ${scenario.name}`);
         expect(isValid).to.be.true;
 
         // Verify signature can be used for actual verification (state-changing)
-        const [signerState, isValidState] = await verifier.verifyPayoutSignature(scenario.data, signature);
+        const result2 = await verifier.verifyPayoutSignature(scenario.data, signature);
+        const signerState = result2.signer || result2[0];
+        const isValidState = result2.isValid || result2[1];
         
         expect(signerState).to.equal(agent1.address);
         expect(isValidState).to.be.true;
