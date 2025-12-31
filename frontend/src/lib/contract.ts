@@ -87,6 +87,45 @@ export const VERA_ESCROW_ABI = [
     ],
     "name": "MilestoneSubmitted",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "milestoneId", "type": "bytes32"},
+      {"indexed": true, "internalType": "address", "name": "freelancer", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "TechnicalReleaseExecuted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "milestoneId", "type": "bytes32"},
+      {"indexed": true, "internalType": "address", "name": "freelancer", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "SubjectiveReleaseExecuted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "milestoneId", "type": "bytes32"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "SilentConsentTriggered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "milestoneId", "type": "bytes32"},
+      {"indexed": true, "internalType": "address", "name": "disputer", "type": "address"},
+      {"indexed": false, "internalType": "string", "name": "reason", "type": "string"}
+    ],
+    "name": "DisputeRaised",
+    "type": "event"
   }
 ] as const;
 
