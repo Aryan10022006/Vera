@@ -1,7 +1,6 @@
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { config } from './wagmi';
 import { AuthProvider } from './contexts/AuthContext';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -13,12 +12,10 @@ import MarketplacePage from './pages/MarketplacePage';
 import GitHubCallback from './pages/GitHubCallback';
 
 const queryClient = new QueryClient();
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1051666934123-abc123.apps.googleusercontent.com';
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <WagmiProvider config={config}>
+    <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider theme={darkTheme({
             accentColor: '#0ea5e9',
@@ -37,7 +34,6 @@ function App() {
           </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
-    </GoogleOAuthProvider>
   );
 }
 

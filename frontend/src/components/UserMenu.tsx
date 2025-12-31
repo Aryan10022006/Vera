@@ -10,8 +10,8 @@ export default function UserMenu() {
 
   if (!isAuthenticated || !user) return null;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     disconnect();
     setIsOpen(false);
   };

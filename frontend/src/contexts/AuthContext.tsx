@@ -1,23 +1,27 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 
 interface User {
   email: string;
   name: string;
   picture: string;
   role: 'client' | 'freelancer' | null;
+  uid: string;
 }
 
 interface AuthContextType {
   // Wallet
   isConnected: boolean;
   address: string | undefined;
-  // Google Auth
+  // Firebase Auth
   user: User | null;
   isAuthenticated: boolean;
-  login: (credential: string) => void;
-  logout: () => void;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   setUserRole: (role: 'client' | 'freelancer') => void;
+  loading: boolean;
   // Role checks
   isClient: boolean;
   isFreelancer: boolean;
@@ -28,9 +32,10 @@ const AuthContext = createContext<AuthContextType>({
   address: undefined,
   user: null,
   isAuthenticated: false,
-  login: () => {},
-  logout: () => {},
+  loginWithGoogle: async () => {},
+  logout: async () => {},
   setUserRole: () => {},
+  loading: true,
   isClient: false,
   isFreelancer: false,
 });
@@ -38,57 +43,71 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount();
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Listen to Firebase auth state changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('vera_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Failed to parse saved user:', e);
-        localStorage.removeItem('vera_user');
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Check localStorage for role
+        const savedRole = localStorage.getItem(`vera_role_${firebaseUser.uid}`);
+        
+        const userData: User = {
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || '',
+          picture: firebaseUser.photoURL || '',
+          uid: firebaseUser.uid,
+          role: savedRole as 'client' | 'freelancer' | null
+        };
+        
+        setUser(userData);
+      } else {
+        setUser(null);
       }
-    }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = (credential: string) => {
+  const loginWithGoogle = async () => {
     try {
-      // Decode Google JWT token
-      const base64Url = credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      const payload = JSON.parse(jsonPayload);
-
-      const newUser: User = {
-        email: payload.email,
-        name: payload.name,
-        picture: payload.picture,
-        role: null // Will be set after role selection
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
+      
+      // Check for saved role
+      const savedRole = localStorage.getItem(`vera_role_${firebaseUser.uid}`);
+      
+      const userData: User = {
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || '',
+        picture: firebaseUser.photoURL || '',
+        uid: firebaseUser.uid,
+        role: savedRole as 'client' | 'freelancer' | null
       };
-
-      setUser(newUser);
-      localStorage.setItem('vera_user', JSON.stringify(newUser));
+      
+      setUser(userData);
     } catch (error) {
-      console.error('Failed to login:', error);
+      console.error('Failed to login with Google:', error);
+      throw error;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('vera_user');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Failed to logout:', error);
+      throw error;
+    }
   };
 
   const setUserRole = (role: 'client' | 'freelancer') => {
     if (user) {
       const updatedUser = { ...user, role };
       setUser(updatedUser);
-      localStorage.setItem('vera_user', JSON.stringify(updatedUser));
+      localStorage.setItem(`vera_role_${user.uid}`, role);
     }
   };
 
@@ -103,9 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         address,
         user,
         isAuthenticated,
-        login,
-        logout,
+        loginWithGoogle,
+        logout: handleLogout,
         setUserRole,
+        loading,
         isClient,
         isFreelancer
       }}
